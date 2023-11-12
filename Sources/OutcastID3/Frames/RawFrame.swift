@@ -14,11 +14,13 @@ import Foundation
 extension OutcastID3.Frame {
     public struct RawFrame: OutcastID3TagFrame {
         public let version: OutcastID3.TagVersion
+        public var frameType: OutcastID3TagFrameType
         public let data: Data
         
-        public init(version: OutcastID3.TagVersion, data: Data) {
+        public init(version: OutcastID3.TagVersion, frameIdentifier: String?, data: Data) {
             self.version = version
             self.data = data
+            self.frameType = .raw(frameIdentifier: frameIdentifier, uniqueID: UUID())
         }
         
         public var debugDescription: String {
@@ -44,14 +46,14 @@ extension OutcastID3.Frame.RawFrame {
     }
 
     public static func parse(version: OutcastID3.TagVersion, data: Data, useSynchSafeFrameSize: Bool) -> OutcastID3TagFrame? {
-        return self.parseKnownFrame(version: version, data: data, useSynchSafeFrameSize: useSynchSafeFrameSize) ?? OutcastID3.Frame.RawFrame(version: version, data: data)
+        return self.parseKnownFrame(version: version, data: data, useSynchSafeFrameSize: useSynchSafeFrameSize)
     }
     
     // TODO: Finish all the unhandled frame types
     
     private static func parseKnownFrame(version: OutcastID3.TagVersion, data: Data, useSynchSafeFrameSize: Bool) -> OutcastID3TagFrame? {
         guard let frameIdentifier = data.frameIdentifier(version: version) else {
-            return nil
+            return OutcastID3.Frame.RawFrame(version: version, frameIdentifier: nil, data: data)
         }
         
         // Check for the basic string types
@@ -121,10 +123,10 @@ extension OutcastID3.Frame.RawFrame {
             break
 
         case (_, "PCNT"):
-            break
+            return OutcastID3.Frame.UIntFrame.parse(version: version, data: data, useSynchSafeFrameSize: useSynchSafeFrameSize)
 
-        case (_, "POPM"):
-            break
+        case (_, OutcastID3.Frame.PopularimeterFrame.frameIdentifier):
+            return OutcastID3.Frame.PopularimeterFrame.parse(version: version, data: data, useSynchSafeFrameSize: useSynchSafeFrameSize)
 
         case (_, "POSS"):
             break
@@ -164,7 +166,7 @@ extension OutcastID3.Frame.RawFrame {
             
         }
         
-        return nil
+        return OutcastID3.Frame.RawFrame(version: version, frameIdentifier: frameIdentifier, data: data)
     }
 }
 

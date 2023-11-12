@@ -14,6 +14,7 @@ import AppKit
 extension OutcastID3.Frame {
     public struct PictureFrame: OutcastID3TagFrame {
         static let frameIdentifier = "APIC"
+        public var frameType: OutcastID3TagFrameType
         
         public struct Picture: Codable {
             #if canImport(UIKit)
@@ -38,6 +39,10 @@ extension OutcastID3.Frame {
 
             var toPngData: Data? {
                 return self.image.pngRepresentation
+            }
+
+            var toJpegData: Data? {
+                return self.image.jpegData(compressionQuality: 0.9)
             }
         }
         
@@ -131,6 +136,7 @@ extension OutcastID3.Frame {
             self.pictureType = pictureType
             self.pictureDescription = pictureDescription
             self.picture = picture
+            self.frameType = .picture(pictureType)
         }
         
         public var debugDescription: String {
@@ -149,11 +155,18 @@ extension OutcastID3.Frame.PictureFrame {
         case .v2_4:
             break
         }
-        
-        
+                
 
-        // TODO: This should use the correct image type according to the mimetype
-        guard let imageData = self.picture.toPngData else {
+        // TODO: This should use the correct image type according to the mimetype.
+        //AC: Extended to support JPEG.
+        let imageData: Data?
+        if self.mimeType.uppercased() == "IMAGE/JPEG" {
+            imageData = self.picture.toJpegData
+        }
+        else {
+            imageData = self.picture.toPngData
+        }
+        guard let imageData else {
             throw OutcastID3.MP3File.WriteError.encodingError
         }
 
@@ -169,6 +182,9 @@ extension OutcastID3.Frame.PictureFrame {
         
         fb.append(byte: self.pictureType.rawValue)
 
+        //BUG:
+        //If we write a picture description using UTF8, the picture is
+        //no longer parsable. isoLatin1 seems to work OK.
         try fb.addString(
             str: self.pictureDescription,
             encoding: self.encoding,

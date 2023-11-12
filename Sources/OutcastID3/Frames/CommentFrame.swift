@@ -10,6 +10,7 @@ import Foundation
 extension OutcastID3.Frame {
     public struct CommentFrame: OutcastID3TagFrame {
         static let frameIdentifier = "COMM"
+        public var frameType: OutcastID3TagFrameType = .comment
         
         public let encoding: String.Encoding
         public let language: String

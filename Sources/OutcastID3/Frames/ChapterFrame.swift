@@ -10,8 +10,10 @@ import Foundation
 
 extension OutcastID3.Frame {
     public struct ChapterFrame: OutcastID3TagFrame {
-        static let frameIdentifier = "CHAP"
         
+        static let frameIdentifier = "CHAP"
+        public var frameType: OutcastID3TagFrameType = .chapter
+
         static let nullValue: UInt32 = 0xFFFFFFFF
         
         public let elementId: String

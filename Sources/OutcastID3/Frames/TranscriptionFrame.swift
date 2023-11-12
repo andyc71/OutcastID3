@@ -10,11 +10,12 @@ import Foundation
 extension OutcastID3.Frame {
     public struct TranscriptionFrame: OutcastID3TagFrame {
         static let frameIdentifier = "USLT"
+        public var frameType: OutcastID3TagFrameType = .transcription
 
-        public let encoding: String.Encoding
-        public let language: String
-        public let lyricsDescription: String
-        public let lyrics: String
+        public var encoding: String.Encoding
+        public var language: String
+        public var lyricsDescription: String
+        public var lyrics: String
         
         public init(encoding: String.Encoding, language: String, lyricsDescription: String, lyrics: String) {
             self.encoding = encoding

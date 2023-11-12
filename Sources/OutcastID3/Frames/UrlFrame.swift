@@ -41,13 +41,14 @@ extension OutcastID3.Frame {
                 }
             }
         }
-        
+        public var frameType: OutcastID3TagFrameType
         public let type: UrlType
         public let urlString: String
         
         public init(type: UrlType, urlString: String) {
             self.type = type
             self.urlString = urlString
+            frameType = .url(type)
         }
         
         public var debugDescription: String {

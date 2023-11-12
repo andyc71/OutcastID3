@@ -10,6 +10,7 @@ import Foundation
 extension OutcastID3.Frame {
     public struct UserUrlFrame: OutcastID3TagFrame {
         static let frameIdentifier = "WXXX"
+        public var frameType: OutcastID3TagFrameType = .userUrl
         
         public let encoding: String.Encoding
         public let urlDescription: String

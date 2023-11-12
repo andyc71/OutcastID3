@@ -46,7 +46,7 @@ extension Data {
         case .single:
             
             while offset < self.count {
-                var byte: UInt8 = self[offset]
+                let byte: UInt8 = self[offset]
 
                 if byte != 0x00 {
                     bytes.append(byte)

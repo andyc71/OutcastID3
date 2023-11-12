@@ -9,7 +9,7 @@
 import Foundation
 
 extension OutcastID3.Frame {
-    public struct StringFrame: OutcastID3TagFrame {
+    public struct StringFrame: OutcastID3TagFrame, Equatable {
         public enum StringType: String, Codable {
             case albumTitle                         = "TALB"
             case contentType                        = "TCON"
@@ -54,6 +54,11 @@ extension OutcastID3.Frame {
             case movementIndex                      = "MVIN"
             case movementCount                      = "MVCN"
             case podcastDescription                 = "TDES"
+            case encodingTime                       = "TDEN"
+            case originalReleaseTime                = "TDOR"
+            case recordingTime                      = "TDRC"
+            case releaseTime                        = "TDRL"  
+            case beatsPerMinute                     = "TBPM"
             
             public var description: String {
                 switch self {
@@ -144,9 +149,22 @@ extension OutcastID3.Frame {
                         return "Movement Count"
                     case .podcastDescription:
                         return "Podcast Description"
+                    
+                case .encodingTime:
+                    return "Encoding Time"
+                case .originalReleaseTime:
+                    return "Original Release Time"
+                case .recordingTime:
+                    return "Recording Time"
+                case .releaseTime:
+                    return "Release Time"
+                case .beatsPerMinute:
+                    return "Beats Per Minute"
+
                 }
             }
         }
+        public var frameType: OutcastID3TagFrameType
         
         public let type: StringType
         public let encoding: String.Encoding
@@ -156,10 +174,11 @@ extension OutcastID3.Frame {
             self.type = type
             self.encoding = encoding
             self.str = str
+            self.frameType = .string(type)
         }
         
         public var debugDescription: String {
-            return "length=\(str.count) str=\(str)"
+            return "stringType=\(type) length=\(str.count) str=\(str)"
         }
     }
 }
@@ -208,7 +227,7 @@ extension OutcastID3.Frame.StringFrame {
         
         let frameContent = data.subdata(in: frameContentRangeStart ..< data.count)
         
-        guard let str = String(data: frameContent, encoding: encoding) else {
+        guard let str = String(data: frameContent, encoding: encoding)?.trimmingCharacters(in: .controlCharacters) else {
             return nil
         }
         
