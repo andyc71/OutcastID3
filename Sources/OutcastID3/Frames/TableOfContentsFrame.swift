@@ -57,9 +57,9 @@ extension OutcastID3.Frame.TableOfContentsFrame {
             break
         }
         
-        let fb = FrameBuilder(frameIdentifier: OutcastID3.Frame.TableOfContentsFrame.frameIdentifier)
+        let builder = FrameBuilder(frameIdentifier: OutcastID3.Frame.TableOfContentsFrame.frameIdentifier)
         
-        try fb.addString(
+        try builder.addString(
             str: self.elementId,
             encoding: .isoLatin1,
             includeEncodingByte: false,
@@ -76,12 +76,12 @@ extension OutcastID3.Frame.TableOfContentsFrame {
             flags += 0x1
         }
         
-        fb.append(byte: flags)
+        builder.append(byte: flags)
 
-        fb.append(byte: UInt8(self.childElementIds.count))
+        builder.append(byte: UInt8(self.childElementIds.count))
         
         for elementId in self.childElementIds {
-            try fb.addString(
+            try builder.addString(
                 str: elementId,
                 encoding: .isoLatin1,
                 includeEncodingByte: false,
@@ -92,14 +92,14 @@ extension OutcastID3.Frame.TableOfContentsFrame {
         for subFrame in self.subFrames {
             do {
                 let subFrameData = try subFrame.frameData(version: version)
-                fb.append(data: subFrameData)
+                builder.append(data: subFrameData)
             }
             catch {
                 print("TOC DATA ERROR: \(error)")
             }
         }
 
-        return try fb.data()
+        return try builder.data()
     }
 }
 

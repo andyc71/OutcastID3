@@ -10,10 +10,13 @@ import Foundation
 
 extension OutcastID3 {
     public enum TagVersion: UInt8, Codable {
+
+        // swiftlint:disable identifier_name
         case v2_2 = 2
         case v2_3 = 3
         case v2_4 = 4
-        
+        // swiftlint:enable identifier_name
+
         var encodingPositionInBytes: Int {
             switch self {
             case .v2_2: return 6
@@ -72,4 +75,3 @@ extension OutcastID3 {
         }
     }
 }
-

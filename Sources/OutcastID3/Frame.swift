@@ -19,7 +19,7 @@ public protocol OutcastID3TagFrame: CustomDebugStringConvertible {
     var frameType: OutcastID3TagFrameType { get }
 }
 
-public enum OutcastID3TagFrameType : Hashable {
+public enum OutcastID3TagFrameType: Hashable {
     case chapter
     case comment
     case picture(_ pictureType: OutcastID3.Frame.PictureFrame.PictureType)
@@ -32,5 +32,3 @@ public enum OutcastID3TagFrameType : Hashable {
     case url(_ urlType: OutcastID3.Frame.UrlFrame.UrlType)
     case userUrl
 }
-
-

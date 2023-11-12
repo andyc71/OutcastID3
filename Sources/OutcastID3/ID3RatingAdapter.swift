@@ -21,16 +21,14 @@ public class ID3RatingAdapter {
         return convertFiveStarToPopularimeter(fiveStarRating)
     }
     
-    
-    
-    ///The rating converted to a defacto standard 5 star range as used
-    ///by popular apps such as Windows Media Player
-    ///0: unrated = 0
-    ///1 (worst rating) = ID3 value of 1
-    ///2 = 64
-    ///3 = 128
-    ///4 = 196
-    ///5 (best rating) = ID3 value of 255
+    /// The rating converted to a defacto standard 5 star range as used
+    /// by popular apps such as Windows Media Player
+    /// 0: unrated = 0
+    /// 1 (worst rating) = ID3 value of 1
+    /// 2 = 64
+    /// 3 = 128
+    /// 4 = 196
+    /// 5 (best rating) = ID3 value of 255
     private var fiveStarToPopmRatings : [Double : Int] = [
         0:0, 1:1, 2:64, 3:128, 4:196, 5:255
     ]
@@ -97,7 +95,6 @@ public struct FiveStarRating: Equatable {
     }
 }
 
-
 /**
  A struct to represent a Popularimeter frame.
  Used only as return type inside `ID3TagContentReader`.
@@ -105,7 +102,7 @@ public struct FiveStarRating: Equatable {
 public struct Popularimeter: Equatable {
     /// The email address associated with rating and playcount.
     public let email: String
-    ///The user's rating of the song. See Rating struct for possible values.
+    /// The user's rating of the song. See Rating struct for possible values.
     public let rating: PopularimeterRating
     /// The number of times the song has been played.
     public let playCount: Int

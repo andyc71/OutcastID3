@@ -65,12 +65,12 @@ extension OutcastID3.MP3File {
         }
         
         // 4 bytes, each of 7 bits
-        let s4 = UInt8(framesByteCount & 0x7f)
-        let s3 = UInt8((framesByteCount >> 7) & 0x7f)
-        let s2 = UInt8((framesByteCount >> 14) & 0x7f)
-        let s1 = UInt8((framesByteCount >> 21) & 0x7f)
+        let byte4 = UInt8(framesByteCount & 0x7f)
+        let byte3 = UInt8((framesByteCount >> 7) & 0x7f)
+        let byte2 = UInt8((framesByteCount >> 14) & 0x7f)
+        let byte1 = UInt8((framesByteCount >> 21) & 0x7f)
         
-        headerBytes.append(contentsOf: [ s1, s2, s3, s4 ])
+        headerBytes.append(contentsOf: [ byte1, byte2, byte3, byte4 ])
         
         writeHandle.write(headerBytes)
         
@@ -102,4 +102,3 @@ extension OutcastID3.MP3File {
         }
     }
 }
-

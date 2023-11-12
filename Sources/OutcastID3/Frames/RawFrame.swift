@@ -16,13 +16,13 @@ extension OutcastID3.Frame {
         public let version: OutcastID3.TagVersion
         public var frameType: OutcastID3TagFrameType
         public let data: Data
-        
+
         public init(version: OutcastID3.TagVersion, frameIdentifier: String?, data: Data) {
             self.version = version
             self.data = data
             self.frameType = .raw(frameIdentifier: frameIdentifier, uniqueID: UUID())
         }
-        
+
         public var debugDescription: String {
             return "version=\(self.version.rawValue)"
         }
@@ -35,7 +35,7 @@ extension OutcastID3.Frame.RawFrame {
         guard version == self.version else {
             throw OutcastID3.MP3File.WriteError.versionMismatch
         }
-        
+
         return self.data
     }
 }
@@ -45,41 +45,39 @@ extension OutcastID3.Frame.RawFrame {
         return self.data.frameIdentifier(version: self.version)
     }
 
-    public static func parse(version: OutcastID3.TagVersion, data: Data, useSynchSafeFrameSize: Bool) -> OutcastID3TagFrame? {
-        return self.parseKnownFrame(version: version, data: data, useSynchSafeFrameSize: useSynchSafeFrameSize)
-    }
-    
     // TODO: Finish all the unhandled frame types
-    
-    private static func parseKnownFrame(version: OutcastID3.TagVersion, data: Data, useSynchSafeFrameSize: Bool) -> OutcastID3TagFrame? {
+
+    // swiftlint:disable line_length cyclomatic_complexity function_body_length
+    public static func parse(version: OutcastID3.TagVersion, data: Data, useSynchSafeFrameSize: Bool) -> OutcastID3TagFrame? {
+
         guard let frameIdentifier = data.frameIdentifier(version: version) else {
             return OutcastID3.Frame.RawFrame(version: version, frameIdentifier: nil, data: data)
         }
-        
+
         // Check for the basic string types
-        
+
         if let stringType = OutcastID3.Frame.StringFrame.StringType(rawValue: frameIdentifier) {
             return OutcastID3.Frame.StringFrame.parse(type: stringType, version: version, data: data)
         }
-        
+
         // Check for the basic URL types
-        
+
         if let urlType = OutcastID3.Frame.UrlFrame.UrlType(rawValue: frameIdentifier) {
             return OutcastID3.Frame.UrlFrame.parse(type: urlType, version: version, data: data, useSynchSafeFrameSize: useSynchSafeFrameSize)
         }
 
         // Check for the remaining types
-        
+
         switch (version, frameIdentifier) {
         case (_, "AENC"):
             break
-            
+
         case (_, OutcastID3.Frame.PictureFrame.frameIdentifier):
             return OutcastID3.Frame.PictureFrame.parse(version: version, data: data, useSynchSafeFrameSize: useSynchSafeFrameSize)
 
         case (_, OutcastID3.Frame.ChapterFrame.frameIdentifier):
             return OutcastID3.Frame.ChapterFrame.parse(version: version, data: data, useSynchSafeFrameSize: useSynchSafeFrameSize)
-            
+
         case (_, OutcastID3.Frame.CommentFrame.frameIdentifier):
             return OutcastID3.Frame.CommentFrame.parse(version: version, data: data, useSynchSafeFrameSize: useSynchSafeFrameSize)
 
@@ -163,21 +161,22 @@ extension OutcastID3.Frame.RawFrame {
 
         default:
             break
-            
+
         }
-        
+
         return OutcastID3.Frame.RawFrame(version: version, frameIdentifier: frameIdentifier, data: data)
     }
 }
+// swiftlint: enable line_length cyclomatic_complexity function_body_length
 
 extension Data {
     func frameIdentifier(version: OutcastID3.TagVersion) -> String? {
         let size = version.frameIdentifierSizeInBytes
-        
+
         guard size < self.count else {
             return nil
         }
-        
+
         let data = [UInt8](self.subdata(in: Range(0...size - 1)))
         return String(bytes: data, encoding: .isoLatin1)
     }

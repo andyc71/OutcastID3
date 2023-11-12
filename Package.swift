@@ -1,4 +1,4 @@
-// swift-tools-version:5.3
+// swift-tools-version:5.6
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
@@ -21,11 +21,16 @@ let package = Package(
             url: "https://github.com/pointfreeco/swift-snapshot-testing",
             from: "1.14.2"
           ),
+        .package(
+            url: "https://github.com/realm/SwiftLint", 
+            from: "0.54.0"
+        )
     ],
     targets: [
         .target(
             name: "OutcastID3",
-            dependencies: []
+            dependencies: [],
+            plugins: [.plugin(name: "SwiftLintPlugin", package: "SwiftLint")]
         ),
         .testTarget(
             name: "OutcastID3Tests",

@@ -121,39 +121,37 @@ extension OutcastID3.ID3Tag {
                         break
                     }
                 }
-                
+
                 let frameData = data.subdata(in: position ..< position + frameSize)
-                
+
                 if let frame = OutcastID3.Frame.RawFrame.parse(version: version, data: frameData, useSynchSafeFrameSize: useSynchSafeFrameSize) {
                     ret.append(frame)
                 }
-                
+
                 position += frameSize// frame.data.count
-            }
-            catch let e {
+            } catch let exception {
                 if throwOnError {
-                    throw e
-                }
-                else {
+                    throw exception
+                } else {
                     break
                 }
             }
         }
-        
+
         return ret
     }
-    
+
     /// Determine the size of the frame that begins at the given position
-    
+
     static func determineFrameSize(data: Data, position: Int, version: OutcastID3.TagVersion, useSynchSafeFrameSize: Bool) throws -> Int {
-        
+
         let offset = position + version.frameSizeOffsetInBytes
-        
+
         guard offset < data.count else {
             throw OutcastID3.MP3File.ReadError.corruptedFile
         }
 //        let byteRange = NSMakeRange(offset, version.frameSizeByteCount)
-        
+
 //        guard byteRange.location + byteRange.length < data.count else {
 //            throw OutcastID3.MP3File.ReadError.corruptedFile
 //        }
@@ -182,12 +180,12 @@ extension Data {
             return nil
         }
         
-        let s1 = UInt32(self[0] & 0x7f) << 21
-        let s2 = UInt32(self[1] & 0x7f) << 14
-        let s3 = UInt32(self[2] & 0x7f) << 7
-        let s4 = UInt32(self[3] & 0x7f)
+        let byte1 = UInt32(self[0] & 0x7f) << 21
+        let byte2 = UInt32(self[1] & 0x7f) << 14
+        let byte3 = UInt32(self[2] & 0x7f) << 7
+        let byte4 = UInt32(self[3] & 0x7f)
         
-        return s1 + s2 + s3 + s4
+        return byte1 + byte2 + byte3 + byte4
     }
     
     // 4 bytes, each of 7 bits
@@ -197,7 +195,7 @@ extension Data {
         }
         
         var val: UInt32 = 0
-        (self as NSData).getBytes(&val, range: NSMakeRange(0, self.count))
+        (self as NSData).getBytes(&val, range: NSRange(location: 0, length: self.count))
         
         return val.bigEndian
     }

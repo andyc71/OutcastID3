@@ -16,8 +16,8 @@ extension OutcastID3.Frame {
             public var description: String {
                 switch self {
                     
-                    case .playCounter:
-                        return "Play Counter"
+                case .playCounter:
+                    return "Play Counter"
                 }
             }
         }
@@ -41,19 +41,19 @@ extension OutcastID3.Frame {
 extension OutcastID3.Frame.UIntFrame {
     public func frameData(version: OutcastID3.TagVersion) throws -> Data {
         switch version {
-            case .v2_2:
-                throw OutcastID3.MP3File.WriteError.unsupportedTagVersion
-            case .v2_3:
-                break
-            case .v2_4:
-                break
+        case .v2_2:
+            throw OutcastID3.MP3File.WriteError.unsupportedTagVersion
+        case .v2_3:
+            break
+        case .v2_4:
+            break
         }
         
-        let fb = FrameBuilder(frameIdentifier: self.type.rawValue)
+        let builder = FrameBuilder(frameIdentifier: self.type.rawValue)
 
-        fb.append(data: UInt32(value).bigEndian.toData)
+        builder.append(data: UInt32(value).bigEndian.toData)
 
-        return try fb.data()
+        return try builder.data()
     }
 }
 
@@ -74,10 +74,10 @@ extension OutcastID3.Frame.UIntFrame {
             return nil
         }
         
-        //let frameContent = data.subdata(in: frameContentRangeStart ..< data.count)
+        // let frameContent = data.subdata(in: frameContentRangeStart ..< data.count)
         
-        //TODO: Look at the frame size to decice how wide the int is (i.e. don't
-        //limit ourselves to UInt
+        // TODO: Look at the frame size to decice how wide the int is (i.e. don't
+        // limit ourselves to UInt
         var int: UInt32 = 0
         let intLength = 4
         let nsData = data.subdata(in: frameContentRangeStart..<frameContentRangeStart+intLength) as NSData

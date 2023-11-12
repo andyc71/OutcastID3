@@ -155,10 +155,9 @@ extension OutcastID3.Frame.PictureFrame {
         case .v2_4:
             break
         }
-                
 
         // TODO: This should use the correct image type according to the mimetype.
-        //AC: Extended to support JPEG.
+        // AC: Extended to support JPEG.
         let imageData: Data?
         if self.mimeType.uppercased() == "IMAGE/JPEG" {
             imageData = self.picture.toJpegData
@@ -170,32 +169,31 @@ extension OutcastID3.Frame.PictureFrame {
             throw OutcastID3.MP3File.WriteError.encodingError
         }
 
-        let fb = FrameBuilder(frameIdentifier: OutcastID3.Frame.PictureFrame.frameIdentifier)
-        fb.addStringEncodingByte(encoding: self.encoding)
+        let builder = FrameBuilder(frameIdentifier: OutcastID3.Frame.PictureFrame.frameIdentifier)
+        builder.addStringEncodingByte(encoding: self.encoding)
         
-        try fb.addString(
+        try builder.addString(
             str: self.mimeType,
             encoding: .isoLatin1,
             includeEncodingByte: false,
             terminator: version.stringTerminator(encoding: .isoLatin1)
         )
         
-        fb.append(byte: self.pictureType.rawValue)
+        builder.append(byte: self.pictureType.rawValue)
 
-        //BUG:
-        //If we write a picture description using UTF8, the picture is
-        //no longer parsable. isoLatin1 seems to work OK.
-        try fb.addString(
+        // BUG:
+        // If we write a picture description using UTF8, the picture is
+        // no longer parsable. isoLatin1 seems to work OK.
+        try builder.addString(
             str: self.pictureDescription,
             encoding: self.encoding,
             includeEncodingByte: false,
             terminator: version.stringTerminator(encoding: self.encoding)
         )
 
-
-        fb.append(data: imageData)
+        builder.append(data: imageData)
         
-        return try fb.data()
+        return try builder.data()
     }
 }
 

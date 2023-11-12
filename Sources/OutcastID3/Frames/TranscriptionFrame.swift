@@ -41,20 +41,20 @@ extension OutcastID3.Frame.TranscriptionFrame {
             break
         }
         
-        let fb = FrameBuilder(frameIdentifier: OutcastID3.Frame.TranscriptionFrame.frameIdentifier)
-        fb.addStringEncodingByte(encoding: self.encoding)
-        try fb.addString(str: self.language, encoding: .isoLatin1, includeEncodingByte: false, terminator: nil)
+        let builder = FrameBuilder(frameIdentifier: OutcastID3.Frame.TranscriptionFrame.frameIdentifier)
+        builder.addStringEncodingByte(encoding: self.encoding)
+        try builder.addString(str: self.language, encoding: .isoLatin1, includeEncodingByte: false, terminator: nil)
         
-        try fb.addString(
+        try builder.addString(
             str: self.lyricsDescription,
             encoding: self.encoding,
             includeEncodingByte: false,
             terminator: version.stringTerminator(encoding: self.encoding)
         )
         
-        try fb.addString(str: self.lyrics, encoding: self.encoding, includeEncodingByte: false, terminator: nil)
+        try builder.addString(str: self.lyrics, encoding: self.encoding, includeEncodingByte: false, terminator: nil)
         
-        return try fb.data()
+        return try builder.data()
     }
 }
 
@@ -68,7 +68,6 @@ extension OutcastID3.Frame.TranscriptionFrame {
         
         let languageLength = 3
         let languageBytes = data.subdata(in: frameContentRangeStart ..< frameContentRangeStart + languageLength)
-        
         
         guard let language = String(bytes: languageBytes, encoding: .isoLatin1) else {
             print("Unable to read language")

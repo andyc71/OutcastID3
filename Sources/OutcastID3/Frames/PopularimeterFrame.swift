@@ -40,16 +40,16 @@ extension OutcastID3.Frame.PopularimeterFrame {
             break
         }
         
-        let fb = FrameBuilder(frameIdentifier: OutcastID3.Frame.PopularimeterFrame.frameIdentifier)
-        try fb.addString(str: email, encoding: .isoLatin1, includeEncodingByte: false, terminator: version.stringTerminator(encoding: .isoLatin1))
+        let builder = FrameBuilder(frameIdentifier: OutcastID3.Frame.PopularimeterFrame.frameIdentifier)
+        try builder.addString(str: email, encoding: .isoLatin1, includeEncodingByte: false, terminator: version.stringTerminator(encoding: .isoLatin1))
         
-        //Append the rating.
-        fb.append(byte: UInt8(rating))
+        // Append the rating.
+        builder.append(byte: UInt8(rating))
         
-        //Append the play counter.
-        fb.append(data: UInt32(playCount).bigEndian.toData)
+        // Append the play counter.
+        builder.append(data: UInt32(playCount).bigEndian.toData)
         
-        return try fb.data()
+        return try builder.data()
     }
 }
 
@@ -61,11 +61,11 @@ extension OutcastID3.Frame.PopularimeterFrame {
         let email = data.readString(offset: &frameContentRangeStart, encoding: .isoLatin1, terminator: version.stringTerminator(encoding: .isoLatin1))
 
         let rating = data[frameContentRangeStart]
-        //let rating = data.subdata(in: frameContentRangeStart ..< frameContentRangeStart + playCountLength)
+        // let rating = data.subdata(in: frameContentRangeStart ..< frameContentRangeStart + playCountLength)
         frameContentRangeStart += 1
 
-        //Remainder of the frame is the playcount.
-        //TODO: DOn't just grab the last 4 bytes, take them all.
+        // Remainder of the frame is the playcount.
+        // TODO: DOn't just grab the last 4 bytes, take them all.
         var counter: UInt32 = 0
         let counterLength = 4
         let nsData = data.subdata(in: frameContentRangeStart..<frameContentRangeStart+counterLength) as NSData

@@ -142,7 +142,7 @@ final class OutcastID3Tests: XCTestCase {
 
         //Save the file as a new one.
         let mp3FileNew = try saveAsTempMP3(originalFile: mp3File, tag: tag)
-        var tagNew = try mp3FileNew.readID3Tag().tag
+        let tagNew = try mp3FileNew.readID3Tag().tag
 
         //Make sure the cover photo matches
         let frontCoverNew = tag.getPictureFrame(.coverFront)
