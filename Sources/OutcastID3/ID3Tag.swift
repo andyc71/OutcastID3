@@ -23,7 +23,10 @@ extension OutcastID3 {
             var pictureFrames = [OutcastID3.Frame.PictureFrame]()
             for frame in frames {
                 // Make sure we're not adding duplicates
-                assert(indexedFrames[frame.frameType] == nil)
+                if indexedFrames.keys.contains(frame.frameType) {
+                    print("Skipping duplicate frame of type \(frame.frameType)")
+                    continue
+                }
                 // Store the frame
                 indexedFrames[frame.frameType] = frame
                 if let pictureFrame = frame as? OutcastID3.Frame.PictureFrame {
