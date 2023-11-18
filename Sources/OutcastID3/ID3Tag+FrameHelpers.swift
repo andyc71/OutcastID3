@@ -241,19 +241,16 @@ extension OutcastID3.ID3Tag {
         }
     }
     
-    public var genres: [String]? {
+    public var genre: String? {
         get {
             guard let genreString = getStringFrame(.contentType)?.str else {
                 return nil
             }
-            
-            // TODO: parse the string properly
-            return [genreString]
+            return genreString
             
         }
         set {
-            // TODO: support multiple
-            setStringFrame(.contentType, newValue?.first)
+            setStringFrame(.contentType, newValue)
         }
     }
     
