@@ -68,7 +68,7 @@ extension OutcastID3.Frame.PopularimeterFrame {
         // TODO: DOn't just grab the last 4 bytes, take them all.
         var counter: UInt32 = 0
         let counterLength = 4
-        guard frameContentRangeStart + counterLength < data.count else {
+        guard frameContentRangeStart + counterLength <= data.count else {
             print("ERROR: Corrupt Popularimeter frame")
             return nil
         }
