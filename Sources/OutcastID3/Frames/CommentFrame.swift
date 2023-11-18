@@ -77,11 +77,16 @@ extension OutcastID3.Frame.CommentFrame {
 
         let commentDescription = data.readString(offset: &frameContentRangeStart, encoding: encoding, terminator: version.stringTerminator(encoding: encoding))
 
-        let comment: String?
+        var comment: String?
         
         if frameContentRangeStart < data.count {
             let commentData = data.subdata(in: frameContentRangeStart ..< data.count)
             comment = String(data: commentData, encoding: encoding)
+            
+            // Have seen some comments with embedded nulls, so let's replace
+            // those with newlines.
+            comment = comment?.replacingOccurrences(of: "\0", with: "\n")
+            
         }
         else {
             comment = nil
