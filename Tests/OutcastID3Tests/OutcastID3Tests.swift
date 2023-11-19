@@ -158,6 +158,38 @@ final class OutcastID3Tests: XCTestCase {
 
     }
     
+    func testReleaseDate() throws {
+        let mp3File = try loadMP3File(from: TestFileNames.dateTestMusicTagEditor)
+        let tag = try mp3File.readID3Tag().tag
+        //XCTAssertEqual(tag.frames.count, 1) //It just has the encoding settings.
+        
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy/MM/dd"
+        let date = formatter.date(from: "2020/01/31")
+        XCTAssertNotNil(date)
+        
+        XCTAssertEqual(tag.releaseTime, date)
+        XCTAssertEqual(tag.originalReleaseTime, nil)
+        
+        
+
+    }
+
+    func testOriginalReleaseDate() throws {
+        let mp3File = try loadMP3File(from: TestFileNames.dateTestEverTag)
+        let tag = try mp3File.readID3Tag().tag
+        //XCTAssertEqual(tag.frames.count, 1) //It just has the encoding settings.
+        
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy/MM/dd"
+        let date = formatter.date(from: "2000/01/31")
+        XCTAssertNotNil(date)
+        
+        XCTAssertEqual(tag.releaseTime, nil)
+        XCTAssertEqual(tag.originalReleaseTime, date)
+
+    }
+
     
 
     ///Create a URL for a file residing in the test bundle's TestData folder.
@@ -197,7 +229,7 @@ final class OutcastID3Tests: XCTestCase {
 
         XCTAssertEqual(TestDataValues.bpm.addOne(shouldAddOne), tag.beatsPerMinute)
         XCTAssertEqual(TestDataValues.comment.addOne(shouldAddOne), tag.comments)
-        XCTAssertEqual(TestDataValues.genre.addOne(shouldAddOne), tag.genres?.first)
+        XCTAssertEqual(TestDataValues.genre.addOne(shouldAddOne), tag.genre)
         XCTAssertEqual(TestDataValues.initialKey.addOne(shouldAddOne), tag.initialKey)
         XCTAssertEqual(TestDataValues.lyrics.addOne(shouldAddOne), tag.unsychronisedLyrics)
         XCTAssertEqual(TestDataValues.originalReleaseDate.addOne(shouldAddOne), tag.originalReleaseTime)
@@ -274,7 +306,7 @@ final class OutcastID3Tests: XCTestCase {
 
         tag.beatsPerMinute = TestDataValues.bpm.addOne()
         tag.comments = TestDataValues.comment.addOne()
-        tag.genres = [TestDataValues.genre.addOne()]
+        tag.genre = TestDataValues.genre.addOne()
         tag.initialKey = TestDataValues.initialKey.addOne()
         tag.unsychronisedLyrics = TestDataValues.lyrics.addOne()
         tag.originalReleaseTime = TestDataValues.originalReleaseDate.addOne()

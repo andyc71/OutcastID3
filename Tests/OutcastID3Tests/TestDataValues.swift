@@ -10,10 +10,19 @@ import OutcastID3
 
 struct TestFileNames {
     //let mp3FileName = "3s-EverTag.mp3"
-    //let mp3FileName = "3s-EverTag-1Photo.mp3"
+    //static let taggedFile = "3s-EverTag-1Photo.mp3"
+    //static let taggedFile = "3s-MusicTagEditor-ReleaseDateTag.mp3"
     static let taggedFile = "3s-MusicTagEditor-3Photos.mp3"
     static let unTaggedFile = "3s-No-Tags.mp3"
 
+
+    //File tagged by Music Tag Editor containing a Release Date
+    //using the the xxxx frame.
+    static let dateTestMusicTagEditor = "3s-MusicTagEditor-ReleaseDateTag.mp3"
+    
+    //File tagged by EverTag containing a Original Release Date
+    //using the the xxxx frame.
+    static let dateTestEverTag = "3s-EverTag-ReleaseDateTag.mp3"
 }
 
 class TestDataValues {

@@ -44,4 +44,3 @@ extension Date {
         return str.replacingOccurrences(of: " ", with: "T")
     }
 }
-
