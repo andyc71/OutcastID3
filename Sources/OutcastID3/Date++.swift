@@ -39,8 +39,14 @@ extension Date {
     
     var id3String: String {
         let dateFormatter = DateFormatter()
+        /*
         dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
         let str = dateFormatter.string(from: self)
         return str.replacingOccurrences(of: " ", with: "T")
+         */
+        //Using a simpler format to match the behaviour of other taggers.
+        dateFormatter.dateFormat = "yyyy-MM-dd"
+        let str = dateFormatter.string(from: self)
+        return str
     }
 }
