@@ -39,6 +39,15 @@ extension OutcastID3.ID3Tag {
         }
     }
     
+    public var composer: String? {
+        get {
+            return getStringFrame(.composer)?.str
+        }
+        set {
+            setStringFrame(.composer, newValue)
+        }
+    }
+    
     public var albumTitle: String? {
         get {
             return getStringFrame(.albumTitle)?.str
