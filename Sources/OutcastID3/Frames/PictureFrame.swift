@@ -24,25 +24,45 @@ extension OutcastID3.Frame {
             #endif
             
             public let image: PictureImage
+            private var jpegData: Data?
+            private var pngData: Data?
 
             public init(image: PictureImage) {
                 self.image = image
+                self.jpegData = nil
+                self.pngData = nil
             }
             
-            init?(data: Data) {
+            init?(data: Data, mimeType: String?) {
                 guard let image = PictureImage(data: data) else {
                     return nil
                 }
                 
                 self.image = image
+                if let mimeType, mimeType.uppercased().contains("JPEG") {
+                    self.jpegData = data
+                }
+                if let mimeType, mimeType.uppercased().contains("PNG") {
+                    self.pngData = data
+                }
             }
 
             var toPngData: Data? {
-                return self.image.pngRepresentation
+                if let data = self.pngData {
+                    return data
+                }
+                else {
+                    return self.image.pngRepresentation
+                }
             }
 
             var toJpegData: Data? {
-                return self.image.jpegData(compressionQuality: 0.9)
+                if let data = self.jpegData {
+                    return data
+                }
+                else {
+                    return self.image.jpegData(compressionQuality: 0.9)
+                }
             }
         }
         
@@ -216,7 +236,7 @@ extension OutcastID3.Frame.PictureFrame {
         
         let pictureBytes = data.subdata(in: frameContentRangeStart ..< data.count)
         
-        guard let picture = Picture(data: pictureBytes) else {
+        guard let picture = Picture(data: pictureBytes, mimeType: mimeType) else {
             return nil
         }
         
