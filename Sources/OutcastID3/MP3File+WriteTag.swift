@@ -91,7 +91,7 @@ extension OutcastID3.MP3File {
         
         let chunkSize = 8192
         
-        while true {
+            while true {
             let chunk = readHandle.readData(ofLength: chunkSize)
             
             guard chunk.count > 0 else {

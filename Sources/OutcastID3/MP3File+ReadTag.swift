@@ -15,6 +15,7 @@ public extension OutcastID3.MP3File {
         case unsupportedTagVersion
         case corruptedFile
         case corruptedHeader
+        case nonSyncSafeFrameSize
     }
     
     // TODO: Handle extended header properly
@@ -70,22 +71,7 @@ public extension OutcastID3.MP3File {
         let endingByteOffset = fileHandle.offsetInFile
         
         // Parse the tag data into frames
-        
-        let frames: [OutcastID3TagFrame]
-        
-        if version == .v2_4 {
-            // Frames may or may not use synch safe frame size, so let's first try without. If that throws, try again with synch safe
-            do {
-                frames = try OutcastID3.ID3Tag.framesFromData(version: version, data: tagData, useSynchSafeFrameSize: false, throwOnError: true)
-            }
-            catch {
-                print("Trying again with synch safe frame size")
-                frames = try OutcastID3.ID3Tag.framesFromData(version: version, data: tagData, useSynchSafeFrameSize: true, throwOnError: false)
-            }
-        }
-        else {
-            frames = try OutcastID3.ID3Tag.framesFromData(version: version, data: tagData, useSynchSafeFrameSize: false)
-        }
+        let frames: [OutcastID3TagFrame] = try OutcastID3.ID3Tag.framesFromData(version: version, data: tagData)
         
         let tag = OutcastID3.ID3Tag(
             version: version,
@@ -100,103 +86,179 @@ public extension OutcastID3.MP3File {
     }
 }
 
+struct FrameSize {
+    var size: Int
+    var isSyncSafe: Bool
+}
+
 extension OutcastID3.ID3Tag {
-    static func framesFromData(version: OutcastID3.TagVersion, data: Data, useSynchSafeFrameSize: Bool, throwOnError: Bool = false) throws -> [OutcastID3TagFrame] {
+    
+    static func framesFromData(version: OutcastID3.TagVersion, data: Data) throws -> [OutcastID3TagFrame] {
         var ret: [OutcastID3TagFrame] = []
         
         var position = 0
         
         let count = data.count
         
+        logDebug("ID3 tag version: \(version)")
+        
         while position < count {
-            do {
-                let frameSize = try determineFrameSize(data: data, position: position, version: version, useSynchSafeFrameSize: useSynchSafeFrameSize)
+            
+            var frame: OutcastID3TagFrame?
+            if version == .v2_4 {
+                    // According to the spec, we should expect synchsafe ints for
+                    // version 2.4, but in reality it works better to check for a
+                    // non-synchsafe first and then fall-back to synchsafe after.
+                    frame = try frameFromData(version: version, data: data, position: &position, useSynchSafeFrameSize: true, throwOnError: false )
                 
-                guard position + frameSize <= count else {
-                    print("Frame size too big position=\(position) + frameSize=\(frameSize) = \(position + frameSize), count=\(count)")
-                    if throwOnError {
-                        throw OutcastID3.MP3File.ReadError.corruptedFile
-                    }
-                    else {
-                        break
-                    }
-                }
-
-                let frameData = data.subdata(in: position ..< position + frameSize)
-
-                if let frame = OutcastID3.Frame.RawFrame.parse(version: version, data: frameData, useSynchSafeFrameSize: useSynchSafeFrameSize) {
-                    ret.append(frame)
-                }
-
-                position += frameSize// frame.data.count
-            } catch let exception {
-                if throwOnError {
-                    throw exception
-                } else {
-                    break
-                }
+            }
+            else {
+                frame = try frameFromData(version: version, data: data, position: &position, useSynchSafeFrameSize: false, throwOnError: false )
+            }
+            
+            if let frame {
+                ret.append(frame)
+            }
+            else {
+                break
+            }
+        }
+        return ret
+    }
+    
+    static func frameFromData(version: OutcastID3.TagVersion, data: Data, position: inout Int, useSynchSafeFrameSize: Bool, throwOnError: Bool = false) throws -> OutcastID3TagFrame? {
+        
+        // TODO: Put a size check here and make it debug only.
+        let frameHeaderData = data.subdata(in: position ..< position+4)
+        // let frameHeaderString = frameHeaderData.map { String(format: "%02x", $0) + " " }.joined()
+        let frameTypeString = String(bytes: frameHeaderData.subdata(in: 0 ..< 4), encoding: .isoLatin1)
+        // logDebug("Frame Header: \(frameHeaderString)")
+        logDebug("Frame Type: \(frameTypeString)")
+        
+        let frameSize: FrameSize
+        do {
+            frameSize = try determineFrameSize(data: data, position: position, version: version, syncSafeStrategy: useSynchSafeFrameSize ? .syncSafe : .nonSyncSafe)
+        }
+        catch {
+            if throwOnError {
+                throw error
+            }
+            else {
+                return nil
+            }
+        }
+        
+        let count = data.count
+        
+        guard position + frameSize.size <= count else {
+            logWarning("Frame size too big position=\(position) + frameSize=\(frameSize.size) = \(position + frameSize.size), count=\(count)")
+            if throwOnError {
+                throw OutcastID3.MP3File.ReadError.corruptedFile
+            }
+            else {
+                return nil
             }
         }
 
-        return ret
+        let frameData = data.subdata(in: position ..< position + frameSize.size)
+
+        guard let frame = OutcastID3.Frame.RawFrame.parse(version: version, data: frameData, useSynchSafeFrameSize: useSynchSafeFrameSize) else {
+            return nil
+        }
+        
+        #if DEBUG
+        logDebug("Frame: \(frame.frameType)")
+        logDebug("Description: \(frame.debugDescription)")
+        
+        /*
+        let frameSizeSyncSafeText: String
+        do {
+            let frameSizeSyncSafe = try determineFrameSize(data: data, position: position, version: version, useSynchSafeFrameSize: true)
+            frameSizeSyncSafeText = String(frameSizeSyncSafe)
+        }
+        catch {
+            frameSizeSyncSafeText = "Error"
+        }
+        let frameSizeNonSyncSafeText: String
+        do {
+            let frameSizeNonSyncSafe = try determineFrameSize(data: data, position: position, version: version, useSynchSafeFrameSize: false)
+            frameSizeNonSyncSafeText = String(frameSizeNonSyncSafe)
+        }
+        catch {
+            frameSizeNonSyncSafeText = "Error"
+        }*/
+        
+        logDebug("Size: \(frameData.count) (isSyncSafe: \(frameSize.isSyncSafe))")
+        // logDebug("  SyncSafe Size: \(frameSizeSyncSafeText)")
+        // logDebug("  Non-SyncSafe Size: \(frameSizeNonSyncSafeText)")
+        // let frameHeader = frameData.subdata(in: 0..<10)
+        let frameDataOnly = frameData.subdata(in: 10..<frameSize.size)
+        
+        // let frameHeaderString = frameHeader.map { String(format: "%02x", $0) + " " }.joined()
+        let frameDataString = frameDataOnly.map { String(format: "%02x", $0) + " " }.joined()
+        // let frameString = frameData.map { String(format: "%02x", $0) + " " }.joined()
+        // logDebug("Header: \(frameHeaderString)")
+        logDebug("Data: \(frameDataString.prefix(500))")
+        // logDebug("Header+Frame: \(frameString.prefix(500))")
+        logDebug("")
+        #endif
+            
+        position += frameSize.size
+        
+        return frame
     }
-
+    
+    enum SyncSafeStrategy { case syncSafe, nonSyncSafe }
+    
     /// Determine the size of the frame that begins at the given position
-
-    static func determineFrameSize(data: Data, position: Int, version: OutcastID3.TagVersion, useSynchSafeFrameSize: Bool) throws -> Int {
-
+    static func determineFrameSize(data: Data, position: Int, version: OutcastID3.TagVersion, syncSafeStrategy: SyncSafeStrategy) throws -> FrameSize {
+        
         let offset = position + version.frameSizeOffsetInBytes
-
+        
         guard offset < data.count else {
             throw OutcastID3.MP3File.ReadError.corruptedFile
         }
-//        let byteRange = NSMakeRange(offset, version.frameSizeByteCount)
-
-//        guard byteRange.location + byteRange.length < data.count else {
-//            throw OutcastID3.MP3File.ReadError.corruptedFile
-//        }
         
         let sizeBytes = data.subdata(in: offset ..< offset + version.frameSizeByteCount)
-
-        if useSynchSafeFrameSize {
-            if let size = sizeBytes.syncSafeUInt32, size > 0, size < Int.max - version.frameHeaderSizeInBytes {
-                return Int(size) + version.frameHeaderSizeInBytes
+        
+        switch syncSafeStrategy {
+        case .syncSafe:
+            guard sizeBytes.isSyncSafeUInt32 else {
+                return try determineFrameSizeNonSyncSafe(sizeBytes: sizeBytes, version: version)
             }
+            return try determineFrameSizeSyncSafe(sizeBytes: sizeBytes, version: version)
+            
+        case .nonSyncSafe:
+            return try determineFrameSizeNonSyncSafe(sizeBytes: sizeBytes, version: version)
+            
         }
-        else {
-            if let size = sizeBytes.toUInt32, size > 0, size < Int.max - version.frameHeaderSizeInBytes {
-                return Int(size) + version.frameHeaderSizeInBytes
-            }
-        }
-        
-        throw OutcastID3.MP3File.ReadError.corruptedFile
-    }
-}
-
-extension Data {
-    // 4 bytes, each of 7 bits
-    var syncSafeUInt32: UInt32? {
-        guard self.count == 4 else {
-            return nil
-        }
-        
-        let byte1 = UInt32(self[0] & 0x7f) << 21
-        let byte2 = UInt32(self[1] & 0x7f) << 14
-        let byte3 = UInt32(self[2] & 0x7f) << 7
-        let byte4 = UInt32(self[3] & 0x7f)
-        
-        return byte1 + byte2 + byte3 + byte4
     }
     
-    // 4 bytes, each of 7 bits
-    var toUInt32: UInt32? {
-        guard self.count == 4 else {
-            return nil
+    static func determineFrameSizeSyncSafe(sizeBytes: Data, version: OutcastID3.TagVersion) throws -> FrameSize {
+        if let size = sizeBytes.syncSafeUInt32, size > 0, size < Int.max - version.frameHeaderSizeInBytes {
+            let size = Int(size) + version.frameHeaderSizeInBytes
+            return FrameSize(size: size, isSyncSafe: false)
         }
-        
-        var val: UInt32 = 0
-        (self as NSData).getBytes(&val, range: NSRange(location: 0, length: self.count))
-        
-        return val.bigEndian
+        else {
+            throw OutcastID3.MP3File.ReadError.corruptedFile
+        }
+    }
+
+    static func determineFrameSizeNonSyncSafe(sizeBytes: Data, version: OutcastID3.TagVersion) throws -> FrameSize {
+        if let size = sizeBytes.toUInt32, size > 0, size < Int.max - version.frameHeaderSizeInBytes {
+            let size = Int(size) + version.frameHeaderSizeInBytes
+            return FrameSize(size: size, isSyncSafe: false)
+        }
+        else {
+            throw OutcastID3.MP3File.ReadError.corruptedFile
+        }
+    }
+    
+    static func logDebug(_ message: String) {
+        // print(message)
+    }
+    
+    static func logWarning(_ message: String) {
+        print("Warning: \(message)")
     }
 }

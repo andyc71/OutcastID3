@@ -10,9 +10,11 @@ import Foundation
 public class FrameBuilder {
 
     private let frameIdentifier: String
+    private let version: OutcastID3.TagVersion
     private var content: Data = Data()
 
-    public init(frameIdentifier: String) {
+    public init(version: OutcastID3.TagVersion, frameIdentifier: String) {
+        self.version = version
         self.frameIdentifier = frameIdentifier
     }
     
@@ -22,9 +24,20 @@ public class FrameBuilder {
         }
         
         let frameSize = UInt32(self.content.count)
+        if version == .v2_4 {
+//            guard let syncSafeUInt32 = SyncSafeUInt32(nonSyncSafeValue: frameSize) else {
+//                throw OutcastID3.MP3File.WriteError.encodingError
+//            }
+//            let data = syncSafeUInt32.toData()
+//            ret.append(data)
+            
+            let data = frameSize.syncSafe.toData
+            ret.append(data)
+        }
+        else {
+            ret.append(frameSize.bigEndian.toData)
+        }
 
-        ret.append(frameSize.bigEndian.toData)
-        
         // TODO: Write correct flags
         ret.append(contentsOf: [ 0x0, 0x0 ])
         ret.append(self.content)

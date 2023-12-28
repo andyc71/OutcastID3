@@ -70,7 +70,7 @@ extension OutcastID3.Frame.ChapterFrame {
             break
         }
 
-        let builder = FrameBuilder(frameIdentifier: OutcastID3.Frame.ChapterFrame.frameIdentifier)
+        let builder = FrameBuilder(version: version, frameIdentifier: OutcastID3.Frame.ChapterFrame.frameIdentifier)
 
         try builder.addString(
             str: self.elementId,
@@ -146,7 +146,7 @@ extension OutcastID3.Frame.ChapterFrame {
             do {
                 let subFramesData = data.subdata(in: offset ..< data.count)
                 // swiftlint: disable:next line_length
-                subFrames = try OutcastID3.ID3Tag.framesFromData(version: version, data: subFramesData, useSynchSafeFrameSize: useSynchSafeFrameSize)
+                subFrames = try OutcastID3.ID3Tag.framesFromData(version: version, data: subFramesData)
             } catch {
                 subFrames = []
             }

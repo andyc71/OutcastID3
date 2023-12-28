@@ -57,7 +57,7 @@ extension OutcastID3.Frame.TableOfContentsFrame {
             break
         }
         
-        let builder = FrameBuilder(frameIdentifier: OutcastID3.Frame.TableOfContentsFrame.frameIdentifier)
+        let builder = FrameBuilder(version: version, frameIdentifier: OutcastID3.Frame.TableOfContentsFrame.frameIdentifier)
         
         try builder.addString(
             str: self.elementId,
@@ -137,7 +137,7 @@ extension OutcastID3.Frame.TableOfContentsFrame {
         if offset < data.count {
             do {
                 let subFramesData = data.subdata(in: offset ..< data.count)
-                subFrames = try OutcastID3.ID3Tag.framesFromData(version: version, data: subFramesData, useSynchSafeFrameSize: useSynchSafeFrameSize)
+                subFrames = try OutcastID3.ID3Tag.framesFromData(version: version, data: subFramesData)
             }
             catch {
                 subFrames = []

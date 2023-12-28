@@ -40,7 +40,7 @@ extension OutcastID3.Frame.PopularimeterFrame {
             break
         }
         
-        let builder = FrameBuilder(frameIdentifier: OutcastID3.Frame.PopularimeterFrame.frameIdentifier)
+        let builder = FrameBuilder(version: version, frameIdentifier: OutcastID3.Frame.PopularimeterFrame.frameIdentifier)
         try builder.addString(str: email, encoding: .isoLatin1, includeEncodingByte: false, terminator: version.stringTerminator(encoding: .isoLatin1))
         
         // Append the rating.

@@ -189,7 +189,7 @@ extension OutcastID3.Frame.PictureFrame {
             throw OutcastID3.MP3File.WriteError.encodingError
         }
 
-        let builder = FrameBuilder(frameIdentifier: OutcastID3.Frame.PictureFrame.frameIdentifier)
+        let builder = FrameBuilder(version: version, frameIdentifier: OutcastID3.Frame.PictureFrame.frameIdentifier)
         builder.addStringEncodingByte(encoding: self.encoding)
         
         try builder.addString(

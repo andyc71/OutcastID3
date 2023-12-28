@@ -189,6 +189,32 @@ final class OutcastID3Tests: XCTestCase {
         XCTAssertEqual(tag.originalReleaseTime, date)
 
     }
+    
+    ///Tests a file with a version 4.2 tag, which is supposed to have only SyncSafe frame sizes, but in this case
+    ///actually contains an APIC frame with a non-SyncSafe frame size.
+    func testVersion2_4_with_Mixed_SyncSafe() throws {
+        let mp3File = try loadMP3File(from: TestFileNames.tagVersion4_2_With_Mixed_SyncSafe)
+        let tag = try mp3File.readID3Tag().tag
+        let picture1 = tag.getPictureFrame(.other)
+        
+        //Make sure we can read the picture (i.e. the frame with the non-standard size header).
+        XCTAssertNotNil(picture1?.picture.image)
+        if let picture1 = picture1 {
+            XCTAssertGreaterThan(picture1.picture.image.size.width, 50)
+            XCTAssertGreaterThan(picture1.picture.image.size.height, 50)
+        }
+        
+        //Save the file as a new one. It will result in the frame being updated with a
+        //sync safe frame size, so let's check nothing else changes.
+        let mp3FileNew = try saveAsTempMP3(originalFile: mp3File, tag: tag)
+        let tagNew = try mp3FileNew.readID3Tag().tag
+        
+        let picture2 = tagNew.getPictureFrame(.other)
+        assertImagesMatch(picture1?.picture.image, picture2?.picture.image)
+        
+        //Compare all the other frames.
+        compareFrames(tag, tagNew)
+    }
 
     
 
@@ -205,7 +231,7 @@ final class OutcastID3Tests: XCTestCase {
         return FileManager.default.temporaryDirectory.appendingPathComponent(fileName)
     }
     
-    func makeTempFileURL(fileExtension ext: String = "mp3") throws -> URL {
+    func makeTempFileURL(fileExtension ext: String = ".mp3") throws -> URL {
         let fileName = UUID().uuidString.appending("\(ext)")
         let url = try tempURL(for: fileName)
         return url
@@ -286,6 +312,8 @@ final class OutcastID3Tests: XCTestCase {
         let mp3FileNewURL = try makeTempFileURL()
         try originalFile.writeID3Tag(tag: tag, outputUrl: mp3FileNewURL)
         
+        print("New file: \(mp3FileNewURL.path)")
+        
         //Re-load the file we just saved, and then compare the frames
         //to the original.
         let mp3FileNew = try OutcastID3.MP3File(localUrl: mp3FileNewURL)
@@ -311,6 +339,7 @@ final class OutcastID3Tests: XCTestCase {
         tag.unsychronisedLyrics = TestDataValues.lyrics.addOne()
         tag.originalReleaseTime = TestDataValues.originalReleaseDate.addOne()
         tag.recordingTime = TestDataValues.recordingTime.addOne()
+        tag.playCount = TestDataValues.playCount.addOne()
         
         tag.rating = FiveStarRating(TestDataValues.rating.addOne()).toPopularimeterRating()
     }
@@ -347,7 +376,7 @@ final class OutcastID3Tests: XCTestCase {
                 }
                 XCTAssertEqual(u1.frameType, u2.frameType)
                 XCTAssertEqual(u1.type, u2.type)
-                XCTAssertEqual(u1.value, u2.value)
+                XCTAssertEqual(u1.value, u2.value, "Non-matching value in frame \(u1.frameType)")
                 
             case let u1 as OutcastID3.Frame.UrlFrame:
                 //print("\(u.type.description): \(u)")
@@ -606,6 +635,17 @@ extension Date {
 
 extension Int {
     func addOne(_ shouldAddOne: Bool = true) -> Int {
+        if shouldAddOne {
+            return self + 1
+        }
+        else {
+            return self
+        }
+    }
+}
+
+extension UInt {
+    func addOne(_ shouldAddOne: Bool = true) -> UInt {
         if shouldAddOne {
             return self + 1
         }

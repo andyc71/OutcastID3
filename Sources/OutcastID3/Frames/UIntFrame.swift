@@ -49,7 +49,7 @@ extension OutcastID3.Frame.UIntFrame {
             break
         }
         
-        let builder = FrameBuilder(frameIdentifier: self.type.rawValue)
+        let builder = FrameBuilder(version: version, frameIdentifier: self.type.rawValue)
 
         builder.append(data: UInt32(value).bigEndian.toData)
 

@@ -41,7 +41,7 @@ extension OutcastID3.Frame.TranscriptionFrame {
             break
         }
         
-        let builder = FrameBuilder(frameIdentifier: OutcastID3.Frame.TranscriptionFrame.frameIdentifier)
+        let builder = FrameBuilder(version: version, frameIdentifier: OutcastID3.Frame.TranscriptionFrame.frameIdentifier)
         builder.addStringEncodingByte(encoding: self.encoding)
         try builder.addString(str: self.language, encoding: .isoLatin1, includeEncodingByte: false, terminator: nil)
         

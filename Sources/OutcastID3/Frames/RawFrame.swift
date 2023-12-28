@@ -145,7 +145,7 @@ extension OutcastID3.Frame.RawFrame {
             break
 
         case (_, "TXXX"):
-            break
+            return OutcastID3.Frame.UserDefinedTextFrame.parse(version: version, data: data, useSynchSafeFrameSize: useSynchSafeFrameSize)
 
         case (_, "UFID"):
             break

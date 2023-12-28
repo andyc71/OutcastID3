@@ -160,7 +160,7 @@ extension OutcastID3.Frame {
                     return "Release Time"
                 case .beatsPerMinute:
                     return "Beats Per Minute"
-                    
+
                 }
             }
         }
@@ -194,7 +194,7 @@ extension OutcastID3.Frame.StringFrame {
             break
         }
         
-        let builder = FrameBuilder(frameIdentifier: self.type.rawValue)
+        let builder = FrameBuilder(version: version, frameIdentifier: self.type.rawValue)
         try builder.addString(str: self.str, encoding: self.encoding, includeEncodingByte: true, terminator: nil)
         
         return try builder.data()

@@ -42,7 +42,7 @@ extension OutcastID3.Frame.UserUrlFrame {
             break
         }
         
-        let builder = FrameBuilder(frameIdentifier: OutcastID3.Frame.UserUrlFrame.frameIdentifier)
+        let builder = FrameBuilder(version: version, frameIdentifier: OutcastID3.Frame.UserUrlFrame.frameIdentifier)
         
         try builder.addString(
             str: self.urlDescription,

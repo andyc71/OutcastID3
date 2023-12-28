@@ -15,7 +15,6 @@ struct TestFileNames {
     static let taggedFile = "3s-MusicTagEditor-3Photos.mp3"
     static let unTaggedFile = "3s-No-Tags.mp3"
 
-
     //File tagged by Music Tag Editor containing a Release Date
     //using the the xxxx frame.
     static let dateTestMusicTagEditor = "3s-MusicTagEditor-ReleaseDateTag.mp3"
@@ -23,6 +22,14 @@ struct TestFileNames {
     //File tagged by EverTag containing a Original Release Date
     //using the the xxxx frame.
     static let dateTestEverTag = "3s-EverTag-ReleaseDateTag.mp3"
+    
+    //
+    //static let tagVersion3_2 = "Demi_Lovato__Ariana_Grande-Met_Him_Last_Night-Dirty-49330719.mp3"
+    
+    //Version 4.2 tag containing mostly SyncSafe frame size headers, but APIC is an anomoly having
+    //a non-SyncSafe size header.
+    static let tagVersion4_2_With_Mixed_SyncSafe = "Reve-Ex_Ex_Ex__Whoops_-Original_Mix-51442089.mp3"
+
 }
 
 class TestDataValues {
