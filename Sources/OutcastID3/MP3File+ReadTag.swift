@@ -127,13 +127,8 @@ extension OutcastID3.ID3Tag {
     }
     
     static func frameFromData(version: OutcastID3.TagVersion, data: Data, position: inout Int, useSynchSafeFrameSize: Bool, throwOnError: Bool = false) throws -> OutcastID3TagFrame? {
-        
-        // TODO: Put a size check here and make it debug only.
-        let frameHeaderData = data.subdata(in: position ..< position+4)
-        // let frameHeaderString = frameHeaderData.map { String(format: "%02x", $0) + " " }.joined()
-        let frameTypeString = String(bytes: frameHeaderData.subdata(in: 0 ..< 4), encoding: .isoLatin1)
-        // logDebug("Frame Header: \(frameHeaderString)")
-        logDebug("Frame Type: \(frameTypeString)")
+
+        logFrameHeader(data: data, position: position)
         
         let frameSize: FrameSize
         do {
@@ -166,43 +161,8 @@ extension OutcastID3.ID3Tag {
             return nil
         }
         
-        #if DEBUG
-        logDebug("Frame: \(frame.frameType)")
-        logDebug("Description: \(frame.debugDescription)")
-        
-        /*
-        let frameSizeSyncSafeText: String
-        do {
-            let frameSizeSyncSafe = try determineFrameSize(data: data, position: position, version: version, useSynchSafeFrameSize: true)
-            frameSizeSyncSafeText = String(frameSizeSyncSafe)
-        }
-        catch {
-            frameSizeSyncSafeText = "Error"
-        }
-        let frameSizeNonSyncSafeText: String
-        do {
-            let frameSizeNonSyncSafe = try determineFrameSize(data: data, position: position, version: version, useSynchSafeFrameSize: false)
-            frameSizeNonSyncSafeText = String(frameSizeNonSyncSafe)
-        }
-        catch {
-            frameSizeNonSyncSafeText = "Error"
-        }*/
-        
-        logDebug("Size: \(frameData.count) (isSyncSafe: \(frameSize.isSyncSafe))")
-        // logDebug("  SyncSafe Size: \(frameSizeSyncSafeText)")
-        // logDebug("  Non-SyncSafe Size: \(frameSizeNonSyncSafeText)")
-        // let frameHeader = frameData.subdata(in: 0..<10)
-        let frameDataOnly = frameData.subdata(in: 10..<frameSize.size)
-        
-        // let frameHeaderString = frameHeader.map { String(format: "%02x", $0) + " " }.joined()
-        let frameDataString = frameDataOnly.map { String(format: "%02x", $0) + " " }.joined()
-        // let frameString = frameData.map { String(format: "%02x", $0) + " " }.joined()
-        // logDebug("Header: \(frameHeaderString)")
-        logDebug("Data: \(frameDataString.prefix(500))")
-        // logDebug("Header+Frame: \(frameString.prefix(500))")
-        logDebug("")
-        #endif
-            
+        logFrame(frameData: frameData, frame: frame, frameSize: frameSize)
+
         position += frameSize.size
         
         return frame
@@ -260,5 +220,42 @@ extension OutcastID3.ID3Tag {
     
     static func logWarning(_ message: String) {
         print("Warning: \(message)")
+    }
+    
+    static func logFrameHeader(data: Data, position: Int) {
+        guard OutcastID3.Logger.isDetailedLoggingEnabled else { return }
+        let frameHeaderData = data.subdata(in: position ..< position+4)
+        // let frameHeaderString = frameHeaderData.map { String(format: "%02x", $0) + " " }.joined()
+        let frameTypeString = String(bytes: frameHeaderData.subdata(in: 0 ..< 4), encoding: .isoLatin1)
+        // logDebug("Frame Header: \(frameHeaderString)")
+        OutcastID3.Logger.logDebug("Frame Type: \(frameTypeString)")
+    }
+    
+    static func logFrame(frameData: Data, frame: OutcastID3TagFrame, frameSize: FrameSize) {
+        guard OutcastID3.Logger.isDetailedLoggingEnabled else { return }
+        logDebug("Frame: \(frame.frameType)")
+        logDebug("Description: \(frame.debugDescription)")
+
+        logDebug("Size: \(frameData.count) (isSyncSafe: \(frameSize.isSyncSafe))")
+        let frameDataOnly = frameData.subdata(in: 10..<frameSize.size)
+
+        let frameDataString = frameDataOnly.prefix(500).map { String(format: "%02x", $0) + " " }.joined()
+        logDebug("Data: \(frameDataString)")
+        logDebug("")
+    }
+}
+
+extension OutcastID3 {
+    class Logger {
+        static var isDetailedLoggingEnabled: Bool = false
+        
+        static func logDebug(_ message: String) {
+            if isDetailedLoggingEnabled {
+                print("DEBUG: \(message)")
+            }
+        }
+        static func logWarning(_ message: String) {
+            print("WARNING: \(message)")
+        }
     }
 }
