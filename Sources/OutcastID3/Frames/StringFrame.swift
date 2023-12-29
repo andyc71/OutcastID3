@@ -222,7 +222,8 @@ extension OutcastID3.Frame.StringFrame {
         frameContentRangeStart += 1
         
         guard frameContentRangeStart < data.count else {
-            return nil
+            // Return a frame with an empty string.
+            return OutcastID3.Frame.StringFrame(type: type, encoding: encoding, str: "")
         }
         
         let frameContent = data.subdata(in: frameContentRangeStart ..< data.count)

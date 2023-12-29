@@ -215,6 +215,21 @@ final class OutcastID3Tests: XCTestCase {
         //Compare all the other frames.
         compareFrames(tag, tagNew)
     }
+    
+    ///Tests a file with a blank album frame (TALB) formatted in such a way that the frame is present, has an encoding, but no data for the
+    ///album text. Arguably this is corrupt, but we handle it gracefully by returning an album frame with an empty string.
+    func testEmptyAlbumFrame() throws {
+        let mp3File = try loadMP3File(from: TestFileNames.emptyAlbumFrame)
+        let tag = try mp3File.readID3Tag().tag
+        XCTAssertEqual(tag.albumTitle, "")
+        
+        let mp3FileNew = try saveAsTempMP3(originalFile: mp3File, tag: tag)
+        let tagNew = try mp3FileNew.readID3Tag().tag
+        XCTAssertEqual(tagNew.albumTitle, "")
+        
+        //Compare all the other frames.
+        compareFrames(tag, tagNew)
+    }
 
     
 

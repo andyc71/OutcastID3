@@ -103,7 +103,7 @@ extension OutcastID3.ID3Tag {
         logDebug("ID3 tag version: \(version)")
         
         while position < count {
-            
+            var oldPosition = position
             var frame: OutcastID3TagFrame?
             if version == .v2_4 {
                     // According to the spec, we should expect synchsafe ints for
@@ -120,8 +120,16 @@ extension OutcastID3.ID3Tag {
                 ret.append(frame)
             }
             else {
-                break
+                ///We didn't get a frame  back (e.g. could not parse it). If we managed to get a frame size then position will have changed and
+                ///we can skip over the frame and move to the next one. If position didn't move then we just stop parsing any more frames.
+                if position > oldPosition {
+                    continue
+                }
+                else {
+                    break
+                }
             }
+            
         }
         return ret
     }
@@ -156,6 +164,7 @@ extension OutcastID3.ID3Tag {
         }
 
         let frameData = data.subdata(in: position ..< position + frameSize.size)
+        position += frameSize.size
 
         guard let frame = OutcastID3.Frame.RawFrame.parse(version: version, data: frameData, useSynchSafeFrameSize: useSynchSafeFrameSize) else {
             return nil
@@ -163,8 +172,6 @@ extension OutcastID3.ID3Tag {
         
         logFrame(frameData: frameData, frame: frame, frameSize: frameSize)
 
-        position += frameSize.size
-        
         return frame
     }
     
@@ -245,9 +252,9 @@ extension OutcastID3.ID3Tag {
     }
 }
 
-extension OutcastID3 {
-    class Logger {
-        static var isDetailedLoggingEnabled: Bool = false
+public extension OutcastID3 {
+    public class Logger {
+        public static var isDetailedLoggingEnabled: Bool = false
         
         static func logDebug(_ message: String) {
             if isDetailedLoggingEnabled {
