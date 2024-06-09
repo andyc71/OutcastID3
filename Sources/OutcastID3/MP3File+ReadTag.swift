@@ -120,8 +120,8 @@ extension OutcastID3.ID3Tag {
                 ret.append(frame)
             }
             else {
-                ///We didn't get a frame  back (e.g. could not parse it). If we managed to get a frame size then position will have changed and
-                ///we can skip over the frame and move to the next one. If position didn't move then we just stop parsing any more frames.
+                /// We didn't get a frame  back (e.g. could not parse it). If we managed to get a frame size then position will have changed and
+                /// we can skip over the frame and move to the next one. If position didn't move then we just stop parsing any more frames.
                 if position > oldPosition {
                     continue
                 }
