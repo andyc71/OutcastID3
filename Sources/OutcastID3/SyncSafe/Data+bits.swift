@@ -52,7 +52,6 @@ case zero, one
     }
 }
 
-
 extension FixedWidthInteger {
     var bits: [Bit] {
         // Make variable

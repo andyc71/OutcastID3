@@ -44,7 +44,7 @@ extension Date {
         let str = dateFormatter.string(from: self)
         return str.replacingOccurrences(of: " ", with: "T")
          */
-        //Using a simpler format to match the behaviour of other taggers.
+        // Using a simpler format to match the behaviour of other taggers.
         dateFormatter.dateFormat = "yyyy-MM-dd"
         let str = dateFormatter.string(from: self)
         return str
