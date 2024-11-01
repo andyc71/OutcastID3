@@ -20,17 +20,18 @@ let package = Package(
         .package(
             url: "https://github.com/pointfreeco/swift-snapshot-testing",
             from: "1.14.2"
-          ),
-        .package(
-            url: "https://github.com/realm/SwiftLint", 
-            from: "0.54.0"
-        )
+          )
+        //Removing SwiftLint until it adopts swift-syntax 600.0.0 instead of pre-release
+        //.package(
+        //    url: "https://github.com/realm/SwiftLint", 
+        //    from: "0.57.0"
+        //)
     ],
     targets: [
         .target(
             name: "OutcastID3",
-            dependencies: [],
-            plugins: [.plugin(name: "SwiftLintPlugin", package: "SwiftLint")]
+            dependencies: []
+            //plugins: [.plugin(name: "SwiftLintPlugin", package: "SwiftLint")]
         ),
         .testTarget(
             name: "OutcastID3Tests",
