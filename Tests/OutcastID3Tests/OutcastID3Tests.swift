@@ -14,7 +14,6 @@ final class OutcastID3Tests: XCTestCase {
         try checkKnownValues(tag)
         
         //Save the file as a new one.
-        //Save the file as a new one.
         let mp3FileNew = try saveAsTempMP3(originalFile: mp3File, tag: tag)
         let tagNew = try mp3FileNew.readID3Tag().tag
 
@@ -226,6 +225,20 @@ final class OutcastID3Tests: XCTestCase {
         let mp3FileNew = try saveAsTempMP3(originalFile: mp3File, tag: tag)
         let tagNew = try mp3FileNew.readID3Tag().tag
         XCTAssertEqual(tagNew.albumTitle, "")
+        
+        //Compare all the other frames.
+        compareFrames(tag, tagNew)
+    }
+    
+    ///Tests a file an Energy Level within a custom tag.
+    func testCustomFrameWithEnergyLevel() throws {
+        let mp3File = try loadMP3File(from: TestFileNames.tagWithEnergyLevel)
+        let tag = try mp3File.readID3Tag().tag
+        XCTAssertEqual(tag.energyLevel, 7)
+        
+        let mp3FileNew = try saveAsTempMP3(originalFile: mp3File, tag: tag)
+        let tagNew = try mp3FileNew.readID3Tag().tag
+        XCTAssertEqual(tagNew.energyLevel, 7)
         
         //Compare all the other frames.
         compareFrames(tag, tagNew)

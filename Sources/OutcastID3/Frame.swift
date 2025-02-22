@@ -32,7 +32,7 @@ public enum OutcastID3TagFrameType: Hashable, CustomDebugStringConvertible {
     case uInt(_ uintType: OutcastID3.Frame.UIntFrame.UIntType)
     case url(_ urlType: OutcastID3.Frame.UrlFrame.UrlType)
     case userUrl
-    case userDefinedText
+    case userDefinedText(type: OutcastID3.Frame.UserDefinedTextFrame.UserDefinedType)
     
     public var debugDescription: String {
         switch self {
@@ -45,7 +45,7 @@ public enum OutcastID3TagFrameType: Hashable, CustomDebugStringConvertible {
         case .popularimeter:
             return "popularimeter"
         case .raw(let frameIdentifier, let uniqueID):
-            return "raw: frameID \(frameIdentifier), id: \(uniqueID)"
+            return "raw: frameID \(frameIdentifier ?? "<nil>"), id: \(uniqueID)"
         case .string(let type):
             return "string: type: \(type)"
         case .tableOfContents:
@@ -58,8 +58,8 @@ public enum OutcastID3TagFrameType: Hashable, CustomDebugStringConvertible {
             return "URL: type \(type)"
         case .userUrl:
             return "User URL"
-        case .userDefinedText:
-            return "user defined text"
+        case .userDefinedText(let type):
+            return "user defined text: \(type)"
         }
     }
     

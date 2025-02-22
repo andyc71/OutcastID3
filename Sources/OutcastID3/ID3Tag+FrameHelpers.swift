@@ -263,6 +263,21 @@ extension OutcastID3.ID3Tag {
         }
     }
     
+    public var energyLevel: UInt8? {
+        get {
+            for frame in self.frames {
+                if case .userDefinedText(type: .energyLevel(let level)) = frame.frameType {
+                    return level
+                }
+            }
+            return nil
+        }
+        set {
+            setUserDefinedTextFrame(.energyLevel(level: newValue))
+        }
+    }
+
+    
     public func picture(_ pictureType: OutcastID3.Frame.PictureFrame.PictureType) -> OutcastID3.Frame.PictureFrame.Picture? {
         guard let picture = getPictureFrame(pictureType)?.picture else {
             return nil

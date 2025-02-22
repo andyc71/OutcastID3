@@ -25,10 +25,15 @@ struct TestFileNames {
     
     //Version 4.2 tag containing mostly SyncSafe frame size headers, but APIC is an anomoly having
     //a non-SyncSafe size header.
+    //Also has custom text with an Energy Level encoded.
     static let tagVersion4_2_With_Mixed_SyncSafe = "Reve-Ex_Ex_Ex__Whoops_-Original_Mix-51442089.mp3"
     
+    //Custom tag with an Energy Level encoded.
+    static let tagWithEnergyLevel = "Reve-Ex_Ex_Ex__Whoops_-Original_Mix-51442089.mp3"
+
     //File that has a TALB frame with an encoding but no data for the string itself.
     static let emptyAlbumFrame = "CamelPhat__Elderbrook-Cola-Robin_Schulz_Extended_Remix-52224206.mp3"
+    
 
 }
 

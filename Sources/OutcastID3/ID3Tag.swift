@@ -68,6 +68,16 @@ extension OutcastID3 {
             }
         }
         
+        public func getUserDefinedTextFrame(_ userDefinedTextType: OutcastID3.Frame.UserDefinedTextFrame.UserDefinedType) -> OutcastID3.Frame.UserDefinedTextFrame? {
+            return indexedFrames[.userDefinedText(type: userDefinedTextType)] as? OutcastID3.Frame.UserDefinedTextFrame
+        }
+
+        public mutating func setUserDefinedTextFrame(_ userDefinedTextType: OutcastID3.Frame.UserDefinedTextFrame.UserDefinedType) {
+            let frame = OutcastID3.Frame.UserDefinedTextFrame(type: userDefinedTextType, encoding: .utf8)
+            storeFrame(frame.frameType, newFrame: frame)
+        }
+
+        
         public func getUIntFrame(_ uIntType: OutcastID3.Frame.UIntFrame.UIntType) -> OutcastID3.Frame.UIntFrame? {
             return indexedFrames[.uInt(uIntType)] as? OutcastID3.Frame.UIntFrame
         }

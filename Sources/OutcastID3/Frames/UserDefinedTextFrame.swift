@@ -9,20 +9,57 @@ import Foundation
 
 extension OutcastID3.Frame {
     public struct UserDefinedTextFrame: OutcastID3TagFrame {
-        static let frameIdentifier = "TXXX"
-        public var frameType: OutcastID3TagFrameType = .userDefinedText
         
-        public let encoding: String.Encoding
-        public let description: String
-        public let text: String
-        
-        public init(encoding: String.Encoding, description: String, text: String) {
-            self.encoding = encoding
-            self.description = description
-            self.text = text
+        public enum UserDefinedType: Hashable, Equatable, Codable {
+                        
+            case raw(description: String, text: String)
+            case energyLevel(level: UInt8?)
+            
+            public var description: String {
+                switch self {
+                case .raw(let description, _): description
+                case .energyLevel(_): "EnergyLevel"
+                }
+            }
+            
+            public var text: String {
+                switch self {
+                case .raw(_, let text):
+                    return text
+                case .energyLevel(let level):
+                    if let level { return String(level) }
+                    else { return "" }
+                }
+            }
+            
+            public static func parse(description: String, text: String) -> UserDefinedType {
+                if description == "EnergyLevel" {
+                    return .energyLevel(level: UInt8(text))
+                }
+                else {
+                    return .raw(description: description, text: text)
+                }
+            }
         }
+        
+        static let frameIdentifier = "TXXX"
+        
+        public var frameType: OutcastID3TagFrameType
+        public let encoding: String.Encoding
+        
+        public init(type: UserDefinedType, encoding: String.Encoding) {
+            self.frameType = .userDefinedText(type: type)
+            self.encoding = encoding
+        }
+        
+        public init(description: String, text: String, encoding: String.Encoding) {
+            let type = UserDefinedType.parse(description: description, text: text)
+            self.frameType = .userDefinedText(type: type)
+            self.encoding = encoding
+        }
+        
         public var debugDescription: String {
-            return "encoding=\(encoding) description=\(description) length=\(text.count) text=\(text)"
+            return "userDefinedType=\(frameType) encoding=\(encoding)"
         }
     }
 }
@@ -42,14 +79,17 @@ extension OutcastID3.Frame.UserDefinedTextFrame {
         
         builder.addStringEncodingByte(encoding: self.encoding)
         
-        try builder.addString(
-            str: self.description,
-            encoding: self.encoding,
-            includeEncodingByte: false,
-            terminator: version.stringTerminator(encoding: self.encoding)
-        )
-        
-        try builder.addString(str: self.text, encoding: self.encoding, includeEncodingByte: false, terminator: nil)
+        //Should throw if this if case let fails... but it couldn't ever.
+        if case let .userDefinedText(type) = frameType {
+            try builder.addString(
+                str: type.description,
+                encoding: self.encoding,
+                includeEncodingByte: false,
+                terminator: version.stringTerminator(encoding: self.encoding)
+            )
+            
+            try builder.addString(str: type.text, encoding: self.encoding, includeEncodingByte: false, terminator: nil)
+        }
         
         return try builder.data()
     }
@@ -76,9 +116,9 @@ extension OutcastID3.Frame.UserDefinedTextFrame {
         }
         
         return OutcastID3.Frame.UserDefinedTextFrame(
-            encoding: encoding,
             description: description ?? "",
-            text: text ?? ""
+            text: text ?? "",
+            encoding: encoding
         )
     }
 

@@ -103,7 +103,7 @@ extension OutcastID3.ID3Tag {
         logDebug("ID3 tag version: \(version)")
         
         while position < count {
-            var oldPosition = position
+            let oldPosition = position
             var frame: OutcastID3TagFrame?
             if version == .v2_4 {
                     // According to the spec, we should expect synchsafe ints for
@@ -117,6 +117,7 @@ extension OutcastID3.ID3Tag {
             }
             
             if let frame {
+                //print(frame)
                 ret.append(frame)
             }
             else {
