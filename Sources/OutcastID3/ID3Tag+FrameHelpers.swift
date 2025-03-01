@@ -255,6 +255,12 @@ extension OutcastID3.ID3Tag {
             guard let genreString = getStringFrame(.contentType)?.str else {
                 return nil
             }
+            if let intGenre = Int(genreString) {
+                if let genre = ID3Genre(rawValue: intGenre) {
+                    return genre.displayName
+                }
+            }
+
             return genreString
             
         }

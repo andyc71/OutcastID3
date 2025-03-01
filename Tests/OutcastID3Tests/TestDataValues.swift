@@ -22,6 +22,9 @@ struct TestFileNames {
     //File tagged by EverTag containing a Original Release Date
     //using the the xxxx frame.
     static let dateTestEverTag = "3s-EverTag-ReleaseDateTag.mp3"
+    static let genreTestEverTag = dateTestEverTag
+    
+    static let genreStringTag = "3s-GenreStringTag.mp3"
     
     //Version 4.2 tag containing mostly SyncSafe frame size headers, but APIC is an anomoly having
     //a non-SyncSafe size header.

@@ -117,7 +117,7 @@ extension OutcastID3.ID3Tag {
             }
             
             if let frame {
-                print(frame)
+                //print(frame)
                 ret.append(frame)
             }
             else {

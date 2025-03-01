@@ -189,6 +189,18 @@ final class OutcastID3Tests: XCTestCase {
 
     }
     
+    func testGenreConversion() throws {
+        
+        let mp3File = try loadMP3File(from: TestFileNames.genreTestEverTag)
+        let tag = try mp3File.readID3Tag().tag
+        XCTAssertEqual(tag.genre, "Funk")
+        
+        let mp3File2 = try loadMP3File(from: TestFileNames.genreStringTag)
+        let tag2 = try mp3File2.readID3Tag().tag
+        XCTAssertEqual(tag2.genre, "Dance")
+
+    }
+    
     ///Tests a file with a version 4.2 tag, which is supposed to have only SyncSafe frame sizes, but in this case
     ///actually contains an APIC frame with a non-SyncSafe frame size.
     func testVersion2_4_with_Mixed_SyncSafe() throws {
