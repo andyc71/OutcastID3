@@ -1,0 +1,20 @@
+// This is the chapter list for the file
+// 15m-With-Chapters.mp3
+
+00:00 Chapter 1
+01:00 Chapter 2
+01:48 Chapter 3
+02:41 Chapter 4
+03:43 Chapter 5
+05:14 Chapter 6
+06:44 Chapter 7
+07:57 Chapter 8
+09:22 Chapter 9
+10:24 Chapter 10
+12:11 Chapter 11
+13:42 Chapter 12
+
+Title: Title 1
+Artist: Artist 1
+Year: 2025
+

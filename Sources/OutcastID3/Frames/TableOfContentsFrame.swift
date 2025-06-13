@@ -10,7 +10,7 @@ import Foundation
 extension OutcastID3.Frame {
     public struct TableOfContentsFrame: OutcastID3TagFrame {
         static let frameIdentifier = "CTOC"
-        public var frameType: OutcastID3TagFrameType = .tableOfContents
+        public var frameType: OutcastID3TagFrameType
         
         public let elementId: String
         public let isTopLevel: Bool
@@ -26,6 +26,7 @@ extension OutcastID3.Frame {
             self.isOrdered = isOrdered
             self.childElementIds = childElementIds
             self.subFrames = subFrames
+            self.frameType = .tableOfContents(elementId: elementId)
         }
         
         public var debugDescription: String {

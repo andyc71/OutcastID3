@@ -37,6 +37,8 @@ struct TestFileNames {
     //File that has a TALB frame with an encoding but no data for the string itself.
     static let emptyAlbumFrame = "CamelPhat__Elderbrook-Cola-Robin_Schulz_Extended_Remix-52224206.mp3"
     
+    //File with chapters.
+    static let fileWithChapters = "15m-With-Chapters.mp3"
 
 }
 

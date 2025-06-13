@@ -13,7 +13,9 @@ extension OutcastID3 {
         public let version: TagVersion
         public var frames: [OutcastID3TagFrame]
         private var indexedFrames: [OutcastID3TagFrameType: OutcastID3TagFrame]
-        public var pictureFrames: [OutcastID3.Frame.PictureFrame]
+        internal var pictureFrames: [OutcastID3.Frame.PictureFrame]
+        internal var chapterTOCFrames: [OutcastID3.Frame.TableOfContentsFrame]
+        internal var chapterFrames: [OutcastID3.Frame.ChapterFrame]
         
         public init(version: TagVersion, frames: [OutcastID3TagFrame]) {
             self.version = version
@@ -21,6 +23,8 @@ extension OutcastID3 {
             
             var indexedFrames = [OutcastID3TagFrameType: OutcastID3TagFrame]()
             var pictureFrames = [OutcastID3.Frame.PictureFrame]()
+            var chapterTOCFrames = [OutcastID3.Frame.TableOfContentsFrame]()
+            var chapterFrames = [OutcastID3.Frame.ChapterFrame]()
             for frame in frames {
                 // Make sure we're not adding duplicates
                 if indexedFrames.keys.contains(frame.frameType) {
@@ -32,19 +36,27 @@ extension OutcastID3 {
                 if let pictureFrame = frame as? OutcastID3.Frame.PictureFrame {
                     pictureFrames.append(pictureFrame)
                 }
+                else if let chapterTOCFrame = frame as? OutcastID3.Frame.TableOfContentsFrame {
+                    chapterTOCFrames.append(chapterTOCFrame)
+                }
+                else if let chapterFrame = frame as? OutcastID3.Frame.ChapterFrame {
+                    chapterFrames.append(chapterFrame)
+                }
             }
+            
+            //TODO: Decide what to do if we have any chapter frames that aren't part of a TOC.
+            //This is a valid scenario.
+            
             self.indexedFrames = indexedFrames
             self.pictureFrames = pictureFrames
+            self.chapterTOCFrames = chapterTOCFrames
+            self.chapterFrames = chapterFrames
         }
         
         public func getFrame(_ frameType: OutcastID3TagFrameType) -> OutcastID3TagFrame? {
             return indexedFrames[frameType]
         }
         
-        public func getChapterFrame() -> OutcastID3.Frame.ChapterFrame? {
-            return indexedFrames[.chapter] as? OutcastID3.Frame.ChapterFrame
-        }
-
         public func getCommentFrame() -> OutcastID3.Frame.CommentFrame? {
             return indexedFrames[.comment] as? OutcastID3.Frame.CommentFrame
         }
@@ -114,10 +126,6 @@ extension OutcastID3 {
                 self.indexedFrames.removeValue(forKey: frameType)
 
             }
-        }
-
-        public func getTableOfContentsFrame() -> OutcastID3.Frame.TableOfContentsFrame? {
-            return indexedFrames[.tableOfContents] as? OutcastID3.Frame.TableOfContentsFrame
         }
 
         public func getTranscriptionFrame() -> OutcastID3.Frame.TranscriptionFrame? {

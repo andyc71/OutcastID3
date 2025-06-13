@@ -99,16 +99,16 @@ extension OutcastID3.ID3Tag {
             guard let rating = getPopularimeterFrame()?.rating else {
                 return nil
             }
-            return PopularimeterRating(rating)
+            return PopularimeterRating(rating: rating)
         }
         set {
             if let rating = newValue {
                 if var popularimeterFrame = getPopularimeterFrame() {
-                    popularimeterFrame.rating = rating.value
+                    popularimeterFrame.rating = rating.rating
                     storeFrame(.popularimeter, newFrame: popularimeterFrame)
                 }
                 else {
-                    let popularimeterFrame = OutcastID3.Frame.PopularimeterFrame(email: "OutcastID3", rating: rating.value, playCount: 0)
+                    let popularimeterFrame = OutcastID3.Frame.PopularimeterFrame(email: rating.email, rating: rating.rating, playCount: rating.playCount)
                     storeFrame(.popularimeter, newFrame: popularimeterFrame)
                 }
             }
@@ -320,6 +320,82 @@ extension OutcastID3.ID3Tag {
     public var pictures: [OutcastID3.Frame.PictureFrame.Picture] {
         self.pictureFrames.map { $0.picture }
     }
+    
+    public var chapters: ID3TableOfContents? {
+        ChapterDecoder.decode(tocFrames: chapterTOCFrames, chapterFrames: chapterFrames)
+    }
+
+    public mutating func setChapters(_ chapters: [ID3Chapter]) {
+        if let tocFrame = chapterTOCFrames.first(where: {$0.isTopLevel}) {
+            let toc = ID3TableOfContents(elementId: tocFrame.elementId, isTopLevel: true, isOrdered: tocFrame.isOrdered, childTOCs: [], chapters: chapters)
+            setTableOfContents(toc)
+        }
+        else {
+            let toc = ID3TableOfContents(elementId: UUID().uuidString, isTopLevel: true, isOrdered: true, childTOCs: [], chapters: chapters )
+            setTableOfContents(toc)
+        }
+                                            
+    }
+    
+    public mutating func setTableOfContents(_ newTOC: ID3TableOfContents) {
+        // Encode all TOCs and chapters in the hierarchy
+        let (newTOCFrames, newChapterFrames) = ChapterEncoder.encode(toc: newTOC)
+
+        // Create sets of elementIds for TOCs and CHAPs in the new hierarchy
+        let newTOCIds = Set(newTOCFrames.map { $0.elementId })
+        let newChapterIds = Set(newChapterFrames.map { $0.elementId })
+
+        // Remove obsolete TOC frames
+        let oldTOCIds = Set(chapterTOCFrames.map { $0.elementId })
+        let toRemoveTOCs = oldTOCIds.subtracting(newTOCIds)
+        for id in toRemoveTOCs {
+            if let index = chapterTOCFrames.firstIndex(where: { $0.elementId == id }) {
+                let removed = chapterTOCFrames.remove(at: index)
+                storeFrame(removed.frameType, newFrame: nil)
+            }
+        }
+
+        // Remove obsolete CHAP frames
+        let oldChapterIds = Set(chapterFrames.map { $0.elementId })
+        let toRemoveChapters = oldChapterIds.subtracting(newChapterIds)
+        removeChapters(elementIds: Array(toRemoveChapters))
+
+        // Add or update all TOC frames
+        for tocFrame in newTOCFrames {
+            if let index = chapterTOCFrames.firstIndex(where: { $0.elementId == tocFrame.elementId }) {
+                chapterTOCFrames[index] = tocFrame
+            } else {
+                chapterTOCFrames.append(tocFrame)
+            }
+            storeFrame(tocFrame.frameType, newFrame: tocFrame)
+        }
+
+        // Add or update all CHAP frames
+        for chapterFrame in newChapterFrames {
+            setChapter(chapterFrame)
+        }
+    }
+    
+    private mutating func setChapter(_ chapterFrame: OutcastID3.Frame.ChapterFrame) {
+        if let index = chapterFrames.firstIndex(where: { $0.elementId == chapterFrame.elementId }) {
+            self.chapterFrames[index] = chapterFrame
+        }
+        else {
+            self.chapterFrames.append(chapterFrame)
+        }
+        storeFrame(chapterFrame.frameType, newFrame: chapterFrame)
+    }
+    
+    private mutating func removeChapters(elementIds: [String]) {
+        for elementId in elementIds {
+            if let index = chapterFrames.firstIndex(where: { $0.elementId == elementId }) {
+                let chapterFrame = chapterFrames[index]
+                storeFrame(chapterFrame.frameType, newFrame: nil)
+                self.chapterFrames.remove(at: index)
+            }
+        }
+    }
+    
     
     var defaultEncoding: String.Encoding {
         String.Encoding.utf8

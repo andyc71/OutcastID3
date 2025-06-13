@@ -236,7 +236,7 @@ extension OutcastID3.ID3Tag {
         // let frameHeaderString = frameHeaderData.map { String(format: "%02x", $0) + " " }.joined()
         let frameTypeString = String(bytes: frameHeaderData.subdata(in: 0 ..< 4), encoding: .isoLatin1)
         // logDebug("Frame Header: \(frameHeaderString)")
-        OutcastID3.Logger.logDebug("Frame Type: \(frameTypeString)")
+        OutcastID3.Logger.logDebug("Frame Type: \(String(describing: frameTypeString))")
     }
     
     static func logFrame(frameData: Data, frame: OutcastID3TagFrame, frameSize: FrameSize) {
@@ -254,7 +254,7 @@ extension OutcastID3.ID3Tag {
 }
 
 public extension OutcastID3 {
-    public class Logger {
+    class Logger {
         public static var isDetailedLoggingEnabled: Bool = false
         
         static func logDebug(_ message: String) {

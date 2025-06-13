@@ -21,13 +21,13 @@ public protocol OutcastID3TagFrame: CustomDebugStringConvertible {
 
 public enum OutcastID3TagFrameType: Hashable, CustomDebugStringConvertible {
     
-    case chapter
+    case chapter(elementId: String)
     case comment
     case picture(_ pictureType: OutcastID3.Frame.PictureFrame.PictureType)
     case popularimeter
     case raw(frameIdentifier: String?, uniqueID: UUID)
     case string(_ stringType: OutcastID3.Frame.StringFrame.StringType)
-    case tableOfContents
+    case tableOfContents(elementId: String)
     case transcription
     case uInt(_ uintType: OutcastID3.Frame.UIntFrame.UIntType)
     case url(_ urlType: OutcastID3.Frame.UrlFrame.UrlType)

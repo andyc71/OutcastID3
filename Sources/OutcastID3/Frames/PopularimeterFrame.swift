@@ -82,5 +82,11 @@ extension OutcastID3.Frame.PopularimeterFrame {
             playCount: Int(counter)
         )
     }
-
 }
+
+extension OutcastID3.Frame.PopularimeterFrame {
+    public func toID3Rating() -> ID3Rating? {
+        return ID3Rating(email: email, rating: rating, playCount: playCount)
+    }
+}
+

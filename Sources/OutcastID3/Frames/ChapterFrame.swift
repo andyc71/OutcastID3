@@ -12,7 +12,7 @@ extension OutcastID3.Frame {
     public struct ChapterFrame: OutcastID3TagFrame {
 
         static let frameIdentifier = "CHAP"
-        public var frameType: OutcastID3TagFrameType = .chapter
+        public var frameType: OutcastID3TagFrameType
 
         static let nullValue: UInt32 = 0xFFFFFFFF
 
@@ -31,6 +31,7 @@ extension OutcastID3.Frame {
             self.startByteOffset = startByteOffset
             self.endByteOffset = endByteOffset
             self.subFrames = subFrames
+            self.frameType = .chapter(elementId: elementId)
         }
 
         public var debugDescription: String {

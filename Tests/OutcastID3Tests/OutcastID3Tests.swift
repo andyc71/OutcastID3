@@ -35,7 +35,6 @@ final class OutcastID3Tests: XCTestCase {
         tag.title = "New Title"
 
         //Save the file as a new one.
-        //Save the file as a new one.
         let mp3FileNew = try saveAsTempMP3(originalFile: mp3File, tag: tag)
         let tagNew = try mp3FileNew.readID3Tag().tag
 
@@ -256,27 +255,6 @@ final class OutcastID3Tests: XCTestCase {
         compareFrames(tag, tagNew)
     }
 
-    
-
-    ///Create a URL for a file residing in the test bundle's TestData folder.
-    func testDataURL(for fileName: String) throws -> URL {
-        guard let mp3FileURL = Bundle.module.resourceURL?.appendingPathComponent("TestData").appendingPathComponent(fileName) else {
-            throw ID3TestError(message: "Cannot get bundle resource URL for file \(fileName)")
-        }
-        return mp3FileURL
-    }
-    
-    ///Create a URL for a file residing in the temp folder.
-    func tempURL(for fileName: String) throws -> URL {
-        return FileManager.default.temporaryDirectory.appendingPathComponent(fileName)
-    }
-    
-    func makeTempFileURL(fileExtension ext: String = ".mp3") throws -> URL {
-        let fileName = UUID().uuidString.appending("\(ext)")
-        let url = try tempURL(for: fileName)
-        return url
-    }
-    
     ///Checks the frames withtin the tag against a  known set of values.
     ///If includingTitle is false, we don't check the title frame.
     ///If addOne is specified, we append 1 to string values and add 1 to int values
@@ -324,20 +302,7 @@ final class OutcastID3Tests: XCTestCase {
         }
         
     }
-    
-    func loadMP3File(from fileName: String) throws -> OutcastID3.MP3File {
-        let mp3FileURL = try testDataURL(for: fileName)
-        let mp3File = try OutcastID3.MP3File(localUrl: mp3FileURL)
-        return mp3File
-    }
-    
-    ///Loads a tag from an mp3 file within the TestData folder in the resource bundle.
-    func loadTag(from fileName: String) throws -> OutcastID3.ID3Tag {
-        let mp3File = try loadMP3File(from: fileName)
-        let tag = try mp3File.readID3Tag().tag
-        return tag
-    }
-    
+        
     func loadImage(from fileName: String) throws -> UIImage? {
         let imageURL = try testDataURL(for: fileName)
         guard let image = UIImage(contentsOfFile: imageURL.path) else {
@@ -345,20 +310,6 @@ final class OutcastID3Tests: XCTestCase {
             return nil
         }
         return image
-    }
-    
-    ///Saves an MP3 file to a temp file,, using the supplied tags, and returns the temp file.
-    func saveAsTempMP3(originalFile: OutcastID3.MP3File, tag: OutcastID3.ID3Tag) throws -> OutcastID3.MP3File {
-        let mp3FileNewURL = try makeTempFileURL()
-        try originalFile.writeID3Tag(tag: tag, outputUrl: mp3FileNewURL)
-        
-        print("New file: \(mp3FileNewURL.path)")
-        
-        //Re-load the file we just saved, and then compare the frames
-        //to the original.
-        let mp3FileNew = try OutcastID3.MP3File(localUrl: mp3FileNewURL)
-        
-        return mp3FileNew
     }
     
     ///Appends one to each known frame's value within the tag.
