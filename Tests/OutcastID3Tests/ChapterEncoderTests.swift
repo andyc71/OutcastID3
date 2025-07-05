@@ -96,7 +96,7 @@ final class ChapterEncoderTests: XCTestCase {
         var tag = try mp3File.readID3Tag().tag
         
         //Load the original file and check the chapters
-        var toc = try XCTUnwrap(tag.chapters)
+        let toc = try XCTUnwrap(tag.chapters)
         checkKnownChapters(toc)
         
         //Add a new chapter.

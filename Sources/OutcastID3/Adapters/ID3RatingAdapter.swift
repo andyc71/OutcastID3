@@ -16,40 +16,45 @@ public class ID3RatingAdapter {
     public func adapt(_ popRating: PopularimeterRating) -> FiveStarRating {
         convertPopularimeterToFiveStar(popRating)
     }
-    
+
     public func adapt(_ fiveStarRating: FiveStarRating) -> PopularimeterRating {
         return convertFiveStarToPopularimeter(fiveStarRating)
     }
-    
-    /// The rating converted to a defacto standard 5 star range as used
-    /// by popular apps such as Windows Media Player
-    /// 0: unrated = 0
-    /// 1 (worst rating) = ID3 value of 1
-    /// 2 = 64
-    /// 3 = 128
-    /// 4 = 196
-    /// 5 (best rating) = ID3 value of 255
-    private var fiveStarToPopmRatings : [Double : Int] = [
-        0:0, 1:1, 2:64, 3:128, 4:196, 5:255
+
+    /// Canonical values written for each star level
+    private let fiveStarToPopmRatings: [Double: Int] = [
+        0: 0,
+        1: 1,
+        2: 64,
+        3: 128,
+        4: 196,
+        5: 255
     ]
     
+    /// Fuzzy reverse mapping using inclusive POPM rating ranges
+    /// These are loosely based on how Windows Media Player and Mp3tag interpret the values
+    private let popmRatingToFiveStarRanges: [(range: ClosedRange<Int>, stars: Double)] = [
+        (0...0, 0),
+        (1...32, 1),
+        (33...95, 2),
+        (96...159, 3),  // includes 128 and 153
+        (160...223, 4),
+        (224...255, 5)
+    ]
+    
+    /// Converts POPM rating to a 0–5 star rating, using fuzzy matching
     func convertPopularimeterToFiveStar(_ popularimeterRating: PopularimeterRating) -> FiveStarRating {
-        for fiveStarToPopmRating in fiveStarToPopmRatings {
-            if fiveStarToPopmRating.value == popularimeterRating.rating {
-                return FiveStarRating(fiveStarToPopmRating.key)
+        for (range, stars) in popmRatingToFiveStarRanges {
+            if range.contains(popularimeterRating.rating) {
+                return FiveStarRating(stars)
             }
         }
         return FiveStarRating(0)
     }
     
+    /// Converts a 0–5 star rating to a canonical POPM value
     func convertFiveStarToPopularimeter(_ fiveStarRating: FiveStarRating) -> PopularimeterRating {
-        if let popularimeterRating = fiveStarToPopmRatings[fiveStarRating.value] {
-            return PopularimeterRating(rating: popularimeterRating)
-        }
-        else {
-            return PopularimeterRating(rating: 0)
-        }
+        let popmValue = fiveStarToPopmRatings[fiveStarRating.value] ?? 0
+        return PopularimeterRating(rating: popmValue)
     }
-
 }
-
