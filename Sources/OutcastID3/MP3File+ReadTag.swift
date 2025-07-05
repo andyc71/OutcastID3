@@ -167,11 +167,14 @@ extension OutcastID3.ID3Tag {
         let count = data.count
         
         guard position + frameSize.size <= count else {
-            logWarning("Frame size too big position=\(position) + frameSize=\(frameSize.size) = \(position + frameSize.size), count=\(count)")
+            let availableLength = count - position
+            let maxBytes = min(32, availableLength)
+            let previewData = data.subdata(in: position ..< position + maxBytes)
+            logWarning("Frame size too big position=\(position) + frameSize=\(frameSize.size) = \(position + frameSize.size), count=\(count), preview=\(previewData.hexEncodedString())")
+            
             if throwOnError {
                 throw OutcastID3.MP3File.ReadError.corruptedFile
-            }
-            else {
+            } else {
                 return nil
             }
         }
@@ -197,6 +200,10 @@ extension OutcastID3.ID3Tag {
         let end = offset + version.frameSizeByteCount
 
         guard end <= data.count else {
+            let availableLength = data.count - position
+            let maxBytes = min(32, availableLength)
+            let previewData = data.subdata(in: position ..< position + maxBytes)
+            logWarning("Not enough data to determine frame size: position=\(position), offset=\(offset), end=\(end), data.count=\(data.count), preview=\(previewData.hexEncodedString())")
             throw OutcastID3.MP3File.ReadError.corruptedFile
         }
 
@@ -217,19 +224,19 @@ extension OutcastID3.ID3Tag {
     static func determineFrameSizeSyncSafe(sizeBytes: Data, version: OutcastID3.TagVersion) throws -> FrameSize {
         if let size = sizeBytes.syncSafeUInt32, size > 0, size < Int.max - version.frameHeaderSizeInBytes {
             let size = Int(size) + version.frameHeaderSizeInBytes
-            return FrameSize(size: size, isSyncSafe: false)
-        }
-        else {
+            return FrameSize(size: size, isSyncSafe: true)
+        } else {
+            logWarning("Invalid sync-safe frame size. version=\(version), sizeBytes=\(sizeBytes.hexEncodedString())")
             throw OutcastID3.MP3File.ReadError.corruptedFile
         }
     }
-
+    
     static func determineFrameSizeNonSyncSafe(sizeBytes: Data, version: OutcastID3.TagVersion) throws -> FrameSize {
         if let size = sizeBytes.toUInt32, size > 0, size < Int.max - version.frameHeaderSizeInBytes {
             let size = Int(size) + version.frameHeaderSizeInBytes
             return FrameSize(size: size, isSyncSafe: false)
-        }
-        else {
+        } else {
+            logWarning("Invalid non-sync-safe frame size. version=\(version), sizeBytes=\(sizeBytes.hexEncodedString())")
             throw OutcastID3.MP3File.ReadError.corruptedFile
         }
     }
@@ -277,5 +284,11 @@ public extension OutcastID3 {
         static func logWarning(_ message: String) {
             print("WARNING: \(message)")
         }
+    }
+}
+
+extension Data {
+    func hexEncodedString() -> String {
+        self.map { String(format: "%02x", $0) }.joined(separator: " ")
     }
 }
