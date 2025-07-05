@@ -228,10 +228,14 @@ extension OutcastID3.Frame.StringFrame {
         
         let frameContent = data.subdata(in: frameContentRangeStart ..< data.count)
         
-        guard let str = String(data: frameContent, encoding: encoding)?.trimmingCharacters(in: .controlCharacters) else {
+        guard let str = String(data: frameContent, encoding: encoding)?.trimmingCharacters(in: .nullCharacters) else {
             return nil
         }
         
         return OutcastID3.Frame.StringFrame(type: type, encoding: encoding, str: str)
     }
+}
+
+extension CharacterSet {
+    static let nullCharacters = CharacterSet(charactersIn: "\u{0000}")
 }
