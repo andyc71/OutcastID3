@@ -112,8 +112,8 @@ final class ChapterEncoderTests: XCTestCase {
         chapters.append(lastChapter)
         chapters.append(newChapter)
         
-        toc.chapters = chapters
-        tag.setChapters(toc)
+        //toc.chapters = chapters
+        tag.setChapters(chapters)
         
         //Save the file as a new one.
         let mp3FileNew = try saveAsTempMP3(originalFile: mp3File, tag: tag)

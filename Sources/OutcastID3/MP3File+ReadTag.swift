@@ -71,7 +71,7 @@ public extension OutcastID3.MP3File {
         let endingByteOffset = fileHandle.offsetInFile
         
         // Parse the tag data into frames
-        let frames: [OutcastID3TagFrame] = try OutcastID3.ID3Tag.framesFromData(version: version, data: tagData)
+        let frames: [OutcastID3TagFrame] = try OutcastID3.ID3Tag.framesFromData(version: version, data: tagData, url: localUrl)
         
         let tag = OutcastID3.ID3Tag(
             version: version,
@@ -93,27 +93,39 @@ struct FrameSize {
 
 extension OutcastID3.ID3Tag {
     
-    static func framesFromData(version: OutcastID3.TagVersion, data: Data) throws -> [OutcastID3TagFrame] {
+    static func framesFromData(version: OutcastID3.TagVersion, data: Data, url: URL? = nil) throws -> [OutcastID3TagFrame] {
         var ret: [OutcastID3TagFrame] = []
         
         var position = 0
         
         let count = data.count
         
-        logDebug("ID3 tag version: \(version)")
+        logDebug("ID3 tag version: \(version) in \(String(describing: url))")
         
         while position < count {
             let oldPosition = position
             var frame: OutcastID3TagFrame?
+            var lastError: Error?
             if version == .v2_4 {
-                    // According to the spec, we should expect synchsafe ints for
-                    // version 2.4, but in reality it works better to check for a
-                    // non-synchsafe first and then fall-back to synchsafe after.
-                    frame = try frameFromData(version: version, data: data, position: &position, useSynchSafeFrameSize: true, throwOnError: false )
-                
+                // According to the spec, we should expect synchsafe ints for
+                // version 2.4, but in reality it works better to check for both.
+                do {
+                    frame = try frameFromData(version: version, data: data, position: &position, useSynchSafeFrameSize: true, throwOnError: true )
+                }
+                catch {
+                    lastError = error
+                }
             }
-            else {
-                frame = try frameFromData(version: version, data: data, position: &position, useSynchSafeFrameSize: false, throwOnError: false )
+            if frame == nil {
+                do {
+                    frame = try frameFromData(version: version, data: data, position: &position, useSynchSafeFrameSize: false, throwOnError: true )
+                }
+                catch {
+                    lastError = error
+                }
+            }
+            if frame == nil && lastError != nil {
+                print("Corrupt ID3 frame at position \(position) in \(String(describing: url)).")
             }
             
             if let frame {
@@ -179,26 +191,26 @@ extension OutcastID3.ID3Tag {
     enum SyncSafeStrategy { case syncSafe, nonSyncSafe }
     
     /// Determine the size of the frame that begins at the given position
+    /// Includes fix for crash when reading subdata.
     static func determineFrameSize(data: Data, position: Int, version: OutcastID3.TagVersion, syncSafeStrategy: SyncSafeStrategy) throws -> FrameSize {
-        
         let offset = position + version.frameSizeOffsetInBytes
-        
-        guard offset < data.count else {
+        let end = offset + version.frameSizeByteCount
+
+        guard end <= data.count else {
             throw OutcastID3.MP3File.ReadError.corruptedFile
         }
-        
-        let sizeBytes = data.subdata(in: offset ..< offset + version.frameSizeByteCount)
-        
+
+        let sizeBytes = data.subdata(in: offset ..< end)
+
         switch syncSafeStrategy {
         case .syncSafe:
             guard sizeBytes.isSyncSafeUInt32 else {
                 return try determineFrameSizeNonSyncSafe(sizeBytes: sizeBytes, version: version)
             }
             return try determineFrameSizeSyncSafe(sizeBytes: sizeBytes, version: version)
-            
+
         case .nonSyncSafe:
             return try determineFrameSizeNonSyncSafe(sizeBytes: sizeBytes, version: version)
-            
         }
     }
     

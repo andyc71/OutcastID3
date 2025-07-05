@@ -14,6 +14,8 @@ struct TestFileNames {
     //static let taggedFile = "3s-MusicTagEditor-ReleaseDateTag.mp3"
     static let taggedFile = "3s-MusicTagEditor-3Photos.mp3"
     static let unTaggedFile = "3s-No-Tags.mp3"
+    
+    static let corruptedFile = "Cheat Codes, Train - Bloom (Original Mix).mp3"
 
     //File tagged by Music Tag Editor containing a Release Date
     //using the the xxxx frame.
