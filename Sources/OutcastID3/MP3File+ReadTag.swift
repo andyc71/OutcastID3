@@ -14,6 +14,7 @@ public extension OutcastID3.MP3File {
         case tagSizeNotFound
         case unsupportedTagVersion
         case corruptedFile
+        case corruptedFrame
         case corruptedHeader
         case nonSyncSafeFrameSize
     }
@@ -95,55 +96,62 @@ extension OutcastID3.ID3Tag {
     
     static func framesFromData(version: OutcastID3.TagVersion, data: Data, url: URL? = nil) throws -> [OutcastID3TagFrame] {
         var ret: [OutcastID3TagFrame] = []
-        
         var position = 0
-        
         let count = data.count
-        
+
         logDebug("ID3 tag version: \(version) in \(String(describing: url))")
-        
+
         while position < count {
+            // 🛑 Padding check: break if rest is all zero
+            let remainingData = data[position...]
+            if remainingData.allSatisfy({ $0 == 0 }) {
+                logDebug("All remaining data is padding starting at position \(position). Stopping frame parse.")
+                break
+            }
+
+            // Optional: detect 4 zero bytes (frame header length) as soft padding
+            if remainingData.count >= 4 && data[position..<position+4].allSatisfy({ $0 == 0 }) {
+                logDebug("Zeroed 4-byte block detected at position \(position). Likely padding. Stopping.")
+                break
+            }
+
             let oldPosition = position
             var frame: OutcastID3TagFrame?
             var lastError: Error?
+
             if version == .v2_4 {
-                // According to the spec, we should expect synchsafe ints for
-                // version 2.4, but in reality it works better to check for both.
                 do {
-                    frame = try frameFromData(version: version, data: data, position: &position, useSynchSafeFrameSize: true, throwOnError: true )
-                }
-                catch {
+                    frame = try frameFromData(version: version, data: data, position: &position, useSynchSafeFrameSize: true, throwOnError: true)
+                } catch {
                     lastError = error
                 }
             }
+
             if frame == nil {
                 do {
-                    frame = try frameFromData(version: version, data: data, position: &position, useSynchSafeFrameSize: false, throwOnError: true )
-                }
-                catch {
+                    frame = try frameFromData(version: version, data: data, position: &position, useSynchSafeFrameSize: false, throwOnError: true)
+                } catch {
                     lastError = error
                 }
             }
+
             if frame == nil && lastError != nil {
-                print("Corrupt ID3 frame at position \(position) in \(String(describing: url)).")
+                OutcastID3.Logger.logWarning("Corrupt ID3 frame at position \(position) in \(String(describing: url)).")
+                OutcastID3.Logger.logWarning("Error info: \(lastError!)")
             }
-            
+
             if let frame {
-                //print(frame)
                 ret.append(frame)
-            }
-            else {
-                /// We didn't get a frame  back (e.g. could not parse it). If we managed to get a frame size then position will have changed and
-                /// we can skip over the frame and move to the next one. If position didn't move then we just stop parsing any more frames.
+            } else {
                 if position > oldPosition {
                     continue
-                }
-                else {
+                } else {
+                    // ❗️Fail-safe: no frame and position unchanged — stop to avoid infinite loop
                     break
                 }
             }
-            
         }
+
         return ret
     }
     
@@ -157,7 +165,7 @@ extension OutcastID3.ID3Tag {
         }
         catch {
             if throwOnError {
-                throw error
+                throw OutcastID3.MP3File.ReadError.corruptedFrame
             }
             else {
                 return nil
@@ -173,19 +181,25 @@ extension OutcastID3.ID3Tag {
             logWarning("Frame size too big position=\(position) + frameSize=\(frameSize.size) = \(position + frameSize.size), count=\(count), preview=\(previewData.hexEncodedString())")
             
             if throwOnError {
-                throw OutcastID3.MP3File.ReadError.corruptedFile
+                throw OutcastID3.MP3File.ReadError.corruptedFrame
             } else {
                 return nil
             }
         }
 
         let frameData = data.subdata(in: position ..< position + frameSize.size)
-        position += frameSize.size
 
         guard let frame = OutcastID3.Frame.RawFrame.parse(version: version, data: frameData, useSynchSafeFrameSize: useSynchSafeFrameSize) else {
-            return nil
+            logWarning("Failed to parse frame body using syncSafe = \(useSynchSafeFrameSize)")
+            if throwOnError {
+                throw OutcastID3.MP3File.ReadError.corruptedFrame
+            } else {
+                return nil
+            }
         }
-        
+
+        position += frameSize.size
+
         logFrame(frameData: frameData, frame: frame, frameSize: frameSize)
 
         return frame
@@ -242,20 +256,32 @@ extension OutcastID3.ID3Tag {
     }
     
     static func logDebug(_ message: String) {
-        // print(message)
+        OutcastID3.Logger.logDebug(message)
     }
     
     static func logWarning(_ message: String) {
-        print("Warning: \(message)")
+        OutcastID3.Logger.logWarning(message)
     }
     
     static func logFrameHeader(data: Data, position: Int) {
         guard OutcastID3.Logger.isDetailedLoggingEnabled else { return }
-        let frameHeaderData = data.subdata(in: position ..< position+4)
-        // let frameHeaderString = frameHeaderData.map { String(format: "%02x", $0) + " " }.joined()
-        let frameTypeString = String(bytes: frameHeaderData.subdata(in: 0 ..< 4), encoding: .isoLatin1)
-        // logDebug("Frame Header: \(frameHeaderString)")
-        OutcastID3.Logger.logDebug("Frame Type: \(String(describing: frameTypeString))")
+
+        let availableBytes = min(4, data.count - position)
+        guard availableBytes > 0 else {
+            OutcastID3.Logger.logDebug("Frame Type: <no data available at position \(position)>")
+            return
+        }
+
+        let frameHeaderData = data.subdata(in: position ..< position + availableBytes)
+        let frameTypeString = String(bytes: frameHeaderData, encoding: .isoLatin1) ?? "<non-decodable>"
+        let frameHeaderHex = frameHeaderData.map { String(format: "%02x", $0) }.joined(separator: " ")
+
+        var message = "Frame Type: \(frameTypeString) [hex: \(frameHeaderHex)]"
+        if availableBytes < 4 {
+            message += " [invalid frame type: too short]"
+        }
+
+        OutcastID3.Logger.logDebug(message)
     }
     
     static func logFrame(frameData: Data, frame: OutcastID3TagFrame, frameSize: FrameSize) {
@@ -268,7 +294,6 @@ extension OutcastID3.ID3Tag {
 
         let frameDataString = frameDataOnly.prefix(500).map { String(format: "%02x", $0) + " " }.joined()
         logDebug("Data: \(frameDataString)")
-        logDebug("")
     }
 }
 

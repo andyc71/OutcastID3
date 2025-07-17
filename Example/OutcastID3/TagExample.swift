@@ -6,6 +6,7 @@
 //  Copyright © 2019 CocoaPods. All rights reserved.
 //
 
+import Foundation
 import OutcastID3
 
 extension String: Error {}
@@ -15,6 +16,7 @@ class TagExample {
         
         print(url.lastPathComponent)
         
+        OutcastID3.Logger.isDetailedLoggingEnabled = true
         let x = try OutcastID3.MP3File(localUrl: url)
         
         let tag = try x.readID3Tag()
@@ -118,8 +120,12 @@ class TagExample {
             case let toc as OutcastID3.Frame.TableOfContentsFrame:
                 print("TOC: \(toc)")
                 
+            case let pop as OutcastID3.Frame.PopularimeterFrame:
+                print("Popularity: \(pop)")
+
             case let rawFrame as OutcastID3.Frame.RawFrame:
                 print("Unrecognised frame: \(String(describing: rawFrame.frameIdentifier))")
+                
                 
             default:
                 break
