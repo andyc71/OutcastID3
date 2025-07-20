@@ -17,7 +17,7 @@ extension OutcastID3 {
         internal var chapterTOCFrames: [OutcastID3.Frame.TableOfContentsFrame]
         internal var chapterFrames: [OutcastID3.Frame.ChapterFrame]
         
-        public init(version: TagVersion, frames: [OutcastID3TagFrame]) {
+        public init(version: TagVersion, frames: [OutcastID3TagFrame], url: URL) {
             self.version = version
             self.frames = frames
             
@@ -28,7 +28,7 @@ extension OutcastID3 {
             for frame in frames {
                 // Make sure we're not adding duplicates
                 if indexedFrames.keys.contains(frame.frameType) {
-                    print("Skipping duplicate frame of type \(frame.frameType)")
+                    OutcastID3.Logger.logDebug("Skipping duplicate frame of type \(frame.frameType) in \(url)")
                     continue
                 }
                 // Store the frame

@@ -76,7 +76,8 @@ public extension OutcastID3.MP3File {
         
         let tag = OutcastID3.ID3Tag(
             version: version,
-            frames: frames
+            frames: frames,
+            url: localUrl
         )
         
         return TagProperties(
