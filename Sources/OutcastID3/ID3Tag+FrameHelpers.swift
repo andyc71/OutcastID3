@@ -284,12 +284,12 @@ extension OutcastID3.ID3Tag {
     }
 
     
-    public func picture(_ pictureType: OutcastID3.Frame.PictureFrame.PictureType) -> OutcastID3.Frame.PictureFrame.Picture? {
-        guard let picture = getPictureFrame(pictureType)?.picture else {
+    public func picture(_ pictureType: OutcastID3.Frame.PictureFrame.PictureType) -> ID3Picture? {
+        guard let picture = getPictureFrame(pictureType) else {
             return nil
         }
         
-        return picture
+        return ID3Picture(image: picture.picture.image, imageType: picture.pictureType, description: picture.pictureDescription)
     }
     
     public mutating func setPicture(_ pictureType: OutcastID3.Frame.PictureFrame.PictureType, _ pictureImage: OutcastID3.Frame.PictureFrame.Picture.PictureImage?, description: String?) {
@@ -317,8 +317,8 @@ extension OutcastID3.ID3Tag {
         
     }
     
-    public var pictures: [OutcastID3.Frame.PictureFrame.Picture] {
-        self.pictureFrames.map { $0.picture }
+    public var pictures: [ID3Picture] {
+        self.pictureFrames.map { ID3Picture(image: $0.picture.image, imageType: $0.pictureType, description: $0.pictureDescription) }
     }
     
     public var chapters: ID3TableOfContents? {
