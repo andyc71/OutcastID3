@@ -17,7 +17,7 @@ struct TestFileNames {
     
     static let corruptedFile = "Cheat Codes, Train - Bloom (Original Mix).mp3"
     
-    static let corruptedFile_PictureFrame = "CorruptPictureFrame.mp3"
+    static let picture_With_UTF16_Description = "Picture-With-UTF16-Description.mp3"
 
     //File tagged by Music Tag Editor containing a Release Date
     //using the the xxxx frame.
