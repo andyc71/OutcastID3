@@ -317,6 +317,7 @@ extension OutcastID3.ID3Tag {
         
     }
     
+    
     public var pictures: [ID3Picture] {
         self.pictureFrames.map { ID3Picture(image: $0.picture.image, imageType: $0.pictureType, description: $0.pictureDescription) }
     }
