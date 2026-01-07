@@ -7,6 +7,7 @@
 
 
 import XCTest
+import UIKit
 @testable import OutcastID3
 
 // Tests the decoding of Chapter Frames (part of internal persistence layer)
@@ -166,6 +167,45 @@ final class ChapterDecoderTests: XCTestCase {
         XCTAssertEqual(secondTOC.chapters[0].title, "Chapter 2A")
     }
 
+    func testChapterDecoder_IncludesPictureFrames() throws {
+        let imageUrl = try testDataURL(for: "FrontCover.jpg")
+        let imageData = try Data(contentsOf: imageUrl)
+        let image = try XCTUnwrap(UIImage(data: imageData))
+
+        let pictureFrame = OutcastID3.Frame.PictureFrame(
+            encoding: .isoLatin1,
+            mimeType: "image/jpeg",
+            pictureType: .coverFront,
+            pictureDescription: "Front",
+            picture: OutcastID3.Frame.PictureFrame.Picture(image: image)
+        )
+
+        let chapterFrame = OutcastID3.Frame.ChapterFrame(
+            elementId: "ch1",
+            startTime: 10.0,
+            endTime: 20.0,
+            startByteOffset: nil,
+            endByteOffset: nil,
+            subFrames: [pictureFrame]
+        )
+
+        let tocFrame = OutcastID3.Frame.TableOfContentsFrame(
+            elementId: "toc1",
+            isTopLevel: true,
+            isOrdered: true,
+            childElementIds: ["ch1"],
+            subFrames: []
+        )
+
+        let toc = try XCTUnwrap(ChapterDecoder.decode(tocFrames: [tocFrame], chapterFrames: [chapterFrame]))
+        let chapter = try XCTUnwrap(toc.chapters.first)
+        let picture = try XCTUnwrap(chapter.pictures.first)
+
+        XCTAssertEqual(picture.imageType, .coverFront)
+        XCTAssertEqual(picture.description, "Front")
+        assertImagesMatch(picture.image, image)
+    }
+
     // MARK: - Helpers
 
     func titleFrame(_ title: String) -> OutcastID3TagFrame {
@@ -184,4 +224,3 @@ final class ChapterDecoderTests: XCTestCase {
         return OutcastID3.Frame.PopularimeterFrame(email: "", rating: Int(rawRating), playCount: 0)
     }
 }
-

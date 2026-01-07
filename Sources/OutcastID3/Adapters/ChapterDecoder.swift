@@ -61,6 +61,7 @@ public struct ChapterDecoder {
             artist: extractTextFrame(.leadArtist, from: frame.subFrames),
             comments: extractComment(from: frame.subFrames),
             rating: extractRating(from: frame.subFrames),
+            pictures: extractPictures(from: frame.subFrames),
             startTime: frame.startTime,
             endTime: frame.endTime,
         )
@@ -87,5 +88,18 @@ public struct ChapterDecoder {
             }
         }
         return nil
+    }
+
+    private static func extractPictures(from subFrames: [OutcastID3TagFrame]) -> [ID3Picture] {
+        subFrames.compactMap { frame in
+            guard let pictureFrame = frame as? OutcastID3.Frame.PictureFrame else {
+                return nil
+            }
+            return ID3Picture(
+                image: pictureFrame.picture.image,
+                imageType: pictureFrame.pictureType,
+                description: pictureFrame.pictureDescription
+            )
+        }
     }
 }

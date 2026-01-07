@@ -7,6 +7,7 @@
 
 
 import XCTest
+import UIKit
 @testable import OutcastID3
 
 // Tests the encoding of Chapters (public interface)
@@ -131,5 +132,37 @@ final class ChapterEncoderTests: XCTestCase {
         XCTAssertEqual(newLastChapter, lastChapter)
         
     }
-}
 
+    func testEncoding_IncludesPictureFrames() throws {
+        let imageUrl = try testDataURL(for: "FrontCover.jpg")
+        let imageData = try Data(contentsOf: imageUrl)
+        let image = try XCTUnwrap(UIImage(data: imageData))
+
+        let picture = ID3Picture(image: image, imageType: .coverFront, description: "Front")
+        let chapter = ID3Chapter(
+            id: "ch1",
+            title: "Intro",
+            artist: nil,
+            comments: nil,
+            rating: nil,
+            pictures: [picture],
+            startTime: 0,
+            endTime: 10
+        )
+
+        let toc = ID3TableOfContents(
+            elementId: "toc1",
+            isTopLevel: true,
+            isOrdered: true,
+            childTOCs: [],
+            chapters: [chapter]
+        )
+
+        let (_, chapterFrames) = ChapterEncoder.encode(toc: toc)
+        let chapterFrame = try XCTUnwrap(chapterFrames.first)
+        let pictureFrame = chapterFrame.subFrames.compactMap { $0 as? OutcastID3.Frame.PictureFrame }.first
+
+        XCTAssertEqual(pictureFrame?.pictureType, .coverFront)
+        XCTAssertEqual(pictureFrame?.pictureDescription, "Front")
+    }
+}

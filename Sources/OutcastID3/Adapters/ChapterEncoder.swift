@@ -75,6 +75,17 @@ struct ChapterEncoder {
             subFrames.append(OutcastID3.Frame.PopularimeterFrame(email: rating.email, rating: rating.rating, playCount: rating.playCount))
         }
 
+        for picture in chapter.pictures {
+            let pictureFrame = OutcastID3.Frame.PictureFrame(
+                encoding: .isoLatin1,
+                mimeType: "image/jpeg",
+                pictureType: picture.imageType,
+                pictureDescription: picture.description ?? "",
+                picture: OutcastID3.Frame.PictureFrame.Picture(image: picture.image)
+            )
+            subFrames.append(pictureFrame)
+        }
+
         let chapterFrame = OutcastID3.Frame.ChapterFrame(
             elementId: chapter.id,
             startTime: chapter.startTime,
