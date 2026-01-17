@@ -1,0 +1,24 @@
+{
+  "configurations" : [
+    {
+      "id" : "F5D361C9-61F7-42E7-A063-5B8F9BDEA8FB",
+      "name" : "Test Scheme Action",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "performanceAntipatternCheckerEnabled" : true
+  },
+  "testTargets" : [
+    {
+      "target" : {
+        "containerPath" : "container:",
+        "identifier" : "OutcastID3Tests",
+        "name" : "OutcastID3Tests"
+      }
+    }
+  ],
+  "version" : 1
+}

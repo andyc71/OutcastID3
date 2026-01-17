@@ -59,8 +59,13 @@ public struct ChapterDecoder {
             id: frame.elementId,
             title: extractTextFrame(.title, from: frame.subFrames),
             artist: extractTextFrame(.leadArtist, from: frame.subFrames),
+            composer: extractTextFrame(.composer, from: frame.subFrames),
+            description: extractTextFrame(.description, from: frame.subFrames),
             comments: extractComment(from: frame.subFrames),
             rating: extractRating(from: frame.subFrames),
+            explicitSetting: extractUserDefinedText("ITUNESADVISORY", from: frame.subFrames),
+            beatsPerMinute: extractBPM(from: frame.subFrames),
+            initialKey: extractTextFrame(.initialKey, from: frame.subFrames),
             pictures: extractPictures(from: frame.subFrames),
             startTime: frame.startTime,
             endTime: frame.endTime,
@@ -70,6 +75,13 @@ public struct ChapterDecoder {
     private static func extractTextFrame(_ stringType: OutcastID3.Frame.StringFrame.StringType, from subFrames: [OutcastID3TagFrame]) -> String? {
         let frame = subFrames.first { $0.frameType == OutcastID3TagFrameType.string(stringType) } as? OutcastID3.Frame.StringFrame
         return frame?.str
+    }
+
+    private static func extractBPM(from subFrames: [OutcastID3TagFrame]) -> Int? {
+        guard let bpmString = extractTextFrame(.beatsPerMinute, from: subFrames) else {
+            return nil
+        }
+        return Int(bpmString)
     }
     
     private static func extractComment(from subFrames: [OutcastID3TagFrame]) -> String? {
@@ -85,6 +97,25 @@ public struct ChapterDecoder {
         for frame in subFrames {
             if let popm = frame as? OutcastID3.Frame.PopularimeterFrame {
                 return popm.toID3Rating()
+            }
+        }
+        return nil
+    }
+
+    private static func extractUserDefinedText(_ description: String, from subFrames: [OutcastID3TagFrame]) -> String? {
+        for frame in subFrames {
+            guard let userDefined = frame as? OutcastID3.Frame.UserDefinedTextFrame else {
+                continue
+            }
+            if case let .userDefinedText(type) = userDefined.frameType {
+                switch type {
+                case .raw(let desc, let text):
+                    if desc == description {
+                        return text.isEmpty ? nil : text
+                    }
+                case .energyLevel:
+                    continue
+                }
             }
         }
         return nil

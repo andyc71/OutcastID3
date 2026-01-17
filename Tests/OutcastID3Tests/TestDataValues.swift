@@ -43,6 +43,7 @@ struct TestFileNames {
     
     //File with chapters.
     static let fileWithChapters = "15m-With-Chapters.mp3"
+    static let fileWithChapterMetadata = "Chapter-Metadata.mp3"
     
     //File has a lyrics tag without any actual lyrics.
     static let fileWithCorruptedLyics = "Robin Schulz ft Kiddo - All We Got (Ofenbach Remix) (Dirty Extended).mp3"

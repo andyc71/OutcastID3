@@ -283,6 +283,20 @@ extension OutcastID3.ID3Tag {
         }
     }
 
+    public var itunesAdvisory: String? {
+        get {
+            userDefinedTextValue(description: "ITUNESADVISORY")
+        }
+        set {
+            removeUserDefinedTextFrames(description: "ITUNESADVISORY")
+            guard let newValue else {
+                return
+            }
+            let frame = OutcastID3.Frame.UserDefinedTextFrame(description: "ITUNESADVISORY", text: newValue, encoding: .utf8)
+            storeFrame(frame.frameType, newFrame: frame)
+        }
+    }
+
     
     public func picture(_ pictureType: OutcastID3.Frame.PictureFrame.PictureType) -> ID3Picture? {
         guard let picture = getPictureFrame(pictureType) else {
@@ -404,5 +418,45 @@ extension OutcastID3.ID3Tag {
     
     var defaultLanguage: String {
         "ENG"
+    }
+
+    private func userDefinedTextValue(description: String) -> String? {
+        for frame in frames {
+            guard let userDefined = frame as? OutcastID3.Frame.UserDefinedTextFrame else {
+                continue
+            }
+            if case let .userDefinedText(type) = userDefined.frameType {
+                switch type {
+                case .raw(let desc, let text):
+                    if desc == description {
+                        return text.isEmpty ? nil : text
+                    }
+                case .energyLevel:
+                    continue
+                }
+            }
+        }
+        return nil
+    }
+
+    private mutating func removeUserDefinedTextFrames(description: String) {
+        let framesToRemove = frames.compactMap { frame -> OutcastID3TagFrameType? in
+            guard let userDefined = frame as? OutcastID3.Frame.UserDefinedTextFrame else {
+                return nil
+            }
+            if case let .userDefinedText(type) = userDefined.frameType {
+                switch type {
+                case .raw(let desc, _):
+                    return desc == description ? userDefined.frameType : nil
+                case .energyLevel:
+                    return nil
+                }
+            }
+            return nil
+        }
+
+        for frameType in framesToRemove {
+            storeFrame(frameType, newFrame: nil)
+        }
     }
 }

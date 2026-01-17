@@ -90,8 +90,13 @@ final class ChapterDecoderTests: XCTestCase {
         let chapter = chapters[0]
         XCTAssertNil(chapter.title)
         XCTAssertNil(chapter.artist)
+        XCTAssertNil(chapter.composer)
+        XCTAssertNil(chapter.description)
         XCTAssertNil(chapter.comments)
         XCTAssertNil(chapter.rating)
+        XCTAssertNil(chapter.explicitSetting)
+        XCTAssertNil(chapter.beatsPerMinute)
+        XCTAssertNil(chapter.initialKey)
     }
     
     func testChapterDecoder_LoadChaptersFromFile() throws {
@@ -101,6 +106,27 @@ final class ChapterDecoderTests: XCTestCase {
         let toc = try XCTUnwrap(tag.chapters)
         
         checkKnownChapters(toc)
+    }
+
+    func testChapterDecoder_LoadChapterMetadataFromFile() throws {
+        let mp3File = try loadMP3File(from: TestFileNames.fileWithChapterMetadata)
+        let tag = try mp3File.readID3Tag().tag
+
+        let toc = try XCTUnwrap(tag.chapters)
+        let chapter = try XCTUnwrap(toc.chapters.first)
+
+        XCTAssertEqual(chapter.title, "Chapter Title")
+        XCTAssertEqual(chapter.artist, "Chapter Artist")
+        XCTAssertEqual(chapter.composer, "Chapter Composer")
+        XCTAssertEqual(chapter.description, "Chapter Description")
+        XCTAssertEqual(chapter.rating, ID3Rating(email: "test@example.com", rating: 200, playCount: 12))
+        XCTAssertEqual(chapter.explicitSetting, "1")
+        XCTAssertEqual(chapter.beatsPerMinute, 121)
+        XCTAssertEqual(chapter.initialKey, "1A")
+
+        let picture = try XCTUnwrap(chapter.pictures.first)
+        XCTAssertEqual(picture.imageType, .coverFront)
+        XCTAssertEqual(picture.description, "Front")
     }
     
     

@@ -67,12 +67,33 @@ struct ChapterEncoder {
             subFrames.append(OutcastID3.Frame.StringFrame(type: .leadArtist, encoding: .utf8, str: artist))
         }
 
+        if let composer = chapter.composer {
+            subFrames.append(OutcastID3.Frame.StringFrame(type: .composer, encoding: .utf8, str: composer))
+        }
+
+        if let description = chapter.description {
+            subFrames.append(OutcastID3.Frame.StringFrame(type: .description, encoding: .utf8, str: description))
+        }
+
         if let comments = chapter.comments {
             subFrames.append(OutcastID3.Frame.CommentFrame(encoding: .utf8, language: "EN", commentDescription: "", comment: comments))
         }
 
         if let rating = chapter.rating {
             subFrames.append(OutcastID3.Frame.PopularimeterFrame(email: rating.email, rating: rating.rating, playCount: rating.playCount))
+        }
+
+        if let explicitSetting = chapter.explicitSetting {
+            let frame = OutcastID3.Frame.UserDefinedTextFrame(description: "ITUNESADVISORY", text: explicitSetting, encoding: .utf8)
+            subFrames.append(frame)
+        }
+
+        if let bpm = chapter.beatsPerMinute {
+            subFrames.append(OutcastID3.Frame.StringFrame(type: .beatsPerMinute, encoding: .utf8, str: String(bpm)))
+        }
+
+        if let initialKey = chapter.initialKey {
+            subFrames.append(OutcastID3.Frame.StringFrame(type: .initialKey, encoding: .utf8, str: initialKey))
         }
 
         for picture in chapter.pictures {

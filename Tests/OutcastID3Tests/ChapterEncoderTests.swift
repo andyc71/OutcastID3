@@ -133,6 +133,52 @@ final class ChapterEncoderTests: XCTestCase {
         
     }
 
+    func testEncoding_SaveChapterMetadataToFile() throws {
+        let mp3File = try loadMP3File(from: TestFileNames.unTaggedFile)
+        var tag = try mp3File.readID3Tag().tag
+
+        let imageUrl = try testDataURL(for: "FrontCover.jpg")
+        let imageData = try Data(contentsOf: imageUrl)
+        let image = try XCTUnwrap(UIImage(data: imageData))
+        let picture = ID3Picture(image: image, imageType: .coverFront, description: "Front")
+
+        let chapter = ID3Chapter(
+            id: "ch1",
+            title: "Chapter Title",
+            artist: "Chapter Artist",
+            composer: "Chapter Composer",
+            description: "Chapter Description",
+            comments: nil,
+            rating: ID3Rating(email: "test@example.com", rating: 200, playCount: 12),
+            explicitSetting: "1",
+            beatsPerMinute: 121,
+            initialKey: "1A",
+            pictures: [picture],
+            startTime: 0,
+            endTime: 10
+        )
+
+        tag.setChapters([chapter])
+
+        let mp3FileNew = try saveAsTempMP3(originalFile: mp3File, tag: tag)
+        let tagNew = try mp3FileNew.readID3Tag().tag
+        let toc = try XCTUnwrap(tagNew.chapters)
+        let savedChapter = try XCTUnwrap(toc.chapters.first)
+
+        XCTAssertEqual(savedChapter.title, "Chapter Title")
+        XCTAssertEqual(savedChapter.artist, "Chapter Artist")
+        XCTAssertEqual(savedChapter.composer, "Chapter Composer")
+        XCTAssertEqual(savedChapter.description, "Chapter Description")
+        XCTAssertEqual(savedChapter.rating, ID3Rating(email: "test@example.com", rating: 200, playCount: 12))
+        XCTAssertEqual(savedChapter.explicitSetting, "1")
+        XCTAssertEqual(savedChapter.beatsPerMinute, 121)
+        XCTAssertEqual(savedChapter.initialKey, "1A")
+
+        let savedPicture = try XCTUnwrap(savedChapter.pictures.first)
+        XCTAssertEqual(savedPicture.imageType, .coverFront)
+        XCTAssertEqual(savedPicture.description, "Front")
+    }
+
     func testEncoding_IncludesPictureFrames() throws {
         let imageUrl = try testDataURL(for: "FrontCover.jpg")
         let imageData = try Data(contentsOf: imageUrl)

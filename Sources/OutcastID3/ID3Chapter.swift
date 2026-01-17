@@ -10,18 +10,42 @@ public struct ID3Chapter: Equatable {
     public let id: String
     public var title: String?
     public var artist: String?
+    public var composer: String?
+    public var description: String?
     public var comments: String?
     public var rating: ID3Rating?
+    public var explicitSetting: String?
+    public var beatsPerMinute: Int?
+    public var initialKey: String?
     public var pictures: [ID3Picture]
     public var startTime: TimeInterval
     public var endTime: TimeInterval
     
-    public init(id: String, title: String? = nil, artist: String? = nil, comments: String? = nil, rating: ID3Rating? = nil, pictures: [ID3Picture] = [], startTime: TimeInterval, endTime: TimeInterval) {
+    public init(
+        id: String,
+        title: String? = nil,
+        artist: String? = nil,
+        composer: String? = nil,
+        description: String? = nil,
+        comments: String? = nil,
+        rating: ID3Rating? = nil,
+        explicitSetting: String? = nil,
+        beatsPerMinute: Int? = nil,
+        initialKey: String? = nil,
+        pictures: [ID3Picture] = [],
+        startTime: TimeInterval,
+        endTime: TimeInterval
+    ) {
         self.id = id
         self.title = title
         self.artist = artist
+        self.composer = composer
+        self.description = description
         self.comments = comments
         self.rating = rating
+        self.explicitSetting = explicitSetting
+        self.beatsPerMinute = beatsPerMinute
+        self.initialKey = initialKey
         self.pictures = pictures
         self.startTime = startTime
         self.endTime = endTime
@@ -48,8 +72,13 @@ public struct ID3Chapter: Equatable {
         lhs.id == rhs.id &&
         lhs.title == rhs.title &&
         lhs.artist == rhs.artist &&
+        lhs.composer == rhs.composer &&
+        lhs.description == rhs.description &&
         lhs.comments == rhs.comments &&
         lhs.rating == rhs.rating &&
+        lhs.explicitSetting == rhs.explicitSetting &&
+        lhs.beatsPerMinute == rhs.beatsPerMinute &&
+        lhs.initialKey == rhs.initialKey &&
         lhs.startTime == rhs.startTime &&
         lhs.endTime == rhs.endTime &&
         pictureSignatureMatches(lhs.pictureSignature, rhs.pictureSignature)
