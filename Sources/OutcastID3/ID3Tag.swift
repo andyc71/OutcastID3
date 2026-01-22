@@ -65,6 +65,10 @@ extension OutcastID3 {
             return indexedFrames[.picture(pictureType)] as? OutcastID3.Frame.PictureFrame
         }
 
+        public var hasPictures: Bool {
+            !pictureFrames.isEmpty
+        }
+
         public func getStringFrame(_ stringType: OutcastID3.Frame.StringFrame.StringType) -> OutcastID3.Frame.StringFrame? {
             return indexedFrames[.string(stringType)] as? OutcastID3.Frame.StringFrame
         }
