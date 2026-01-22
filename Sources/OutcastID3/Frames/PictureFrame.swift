@@ -16,35 +16,60 @@ extension OutcastID3.Frame {
         static let frameIdentifier = "APIC"
         public var frameType: OutcastID3TagFrameType
         
-        public struct Picture: Codable {
+        public final class Picture: Codable {
             #if canImport(UIKit)
             public typealias PictureImage = UIImage
             #else
             public typealias PictureImage = NSImage
             #endif
             
-            public let image: PictureImage
+            public var image: PictureImage {
+                if let cachedImage {
+                    return cachedImage
+                }
+                guard let imageData, let decoded = PictureImage(data: imageData) else {
+                    if !didLogDecodeFailure {
+                        OutcastID3.Logger.logWarning("Unable to decode picture data into image.")
+                        didLogDecodeFailure = true
+                    }
+                    let fallback = PictureImage()
+                    cachedImage = fallback
+                    return fallback
+                }
+                cachedImage = decoded
+                return decoded
+            }
+
+            private let imageData: Data?
+            private var cachedImage: PictureImage?
             private var jpegData: Data?
             private var pngData: Data?
+            private var didLogDecodeFailure: Bool = false
 
             public init(image: PictureImage) {
-                self.image = image
+                self.cachedImage = image
+                self.imageData = nil
                 self.jpegData = nil
                 self.pngData = nil
             }
             
             init?(data: Data, mimeType: String?) {
-                guard let image = PictureImage(data: data) else {
+                guard !data.isEmpty else {
                     return nil
                 }
-                
-                self.image = image
+
+                self.imageData = data
+                self.cachedImage = nil
                 if let mimeType, mimeType.uppercased().contains("JPEG") {
                     self.jpegData = data
                 }
                 if let mimeType, mimeType.uppercased().contains("PNG") {
                     self.pngData = data
                 }
+            }
+
+            private enum CodingKeys: String, CodingKey {
+                case image
             }
 
             var toPngData: Data? {
@@ -62,6 +87,53 @@ extension OutcastID3.Frame {
                 }
                 else {
                     return self.image.jpegData(compressionQuality: 0.9)
+                }
+            }
+
+            public required init(from decoder: Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                let data = try container.decode(Data.self, forKey: CodingKeys.image)
+
+                #if canImport(UIKit)
+                if #available(iOS 11, tvOS 11, macOS 10.15, *) {
+                    guard let image = try? NSKeyedUnarchiver.unarchivedObject(ofClass: UIImage.self, from: data) else {
+                        throw OutcastID3.Frame.PictureFrame.Error.decodingError
+                    }
+
+                    self.cachedImage = image
+                    self.imageData = nil
+                }
+                else {
+                    guard let image = NSKeyedUnarchiver.unarchiveObject(with: data) as? PictureImage else {
+                        throw OutcastID3.Frame.PictureFrame.Error.decodingError
+                    }
+
+                    self.cachedImage = image
+                    self.imageData = nil
+                }
+                #else
+                guard let image = NSKeyedUnarchiver.unarchiveObject(with: data) as? PictureImage else {
+                    throw OutcastID3.Frame.PictureFrame.Error.decodingError
+                }
+
+                self.cachedImage = image
+                self.imageData = nil
+                #endif
+
+                self.jpegData = nil
+                self.pngData = nil
+            }
+
+            public func encode(to encoder: Encoder) throws {
+                var container = encoder.container(keyedBy: CodingKeys.self)
+
+                if #available(iOS 11, tvOS 11, macOS 10.15, *) {
+                    let data = try NSKeyedArchiver.archivedData(withRootObject: self.image, requiringSecureCoding: false)
+                    try container.encode(data, forKey: .image)
+                }
+                else {
+                    let data = NSKeyedArchiver.archivedData(withRootObject: self.image)
+                    try container.encode(data, forKey: .image)
                 }
             }
         }
@@ -247,54 +319,6 @@ extension OutcastID3.Frame.PictureFrame {
             pictureDescription: pictureDescription ?? "",
             picture: picture
         )
-    }
-}
-
-extension OutcastID3.Frame.PictureFrame.Picture {
-    enum CodingKeys: String, CodingKey {
-        case image
-    }
-
-    public init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        
-        let data = try container.decode(Data.self, forKey: CodingKeys.image)
-
-        #if canImport(UIKit)
-        if #available(iOS 11, tvOS 11, macOS 10.15, *) {
-            guard let image = try? NSKeyedUnarchiver.unarchivedObject(ofClass: UIImage.self, from: data) else {
-                throw OutcastID3.Frame.PictureFrame.Error.decodingError
-            }
-
-            self.image = image
-        }
-        else {
-            guard let image = NSKeyedUnarchiver.unarchiveObject(with: data) as? PictureImage else {
-                throw OutcastID3.Frame.PictureFrame.Error.decodingError
-            }
-
-            self.image = image
-        }
-        #else
-        guard let image = NSKeyedUnarchiver.unarchiveObject(with: data) as? PictureImage else {
-            throw OutcastID3.Frame.PictureFrame.Error.decodingError
-        }
-
-        self.image = image
-        #endif
-    }
-    
-    public func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-
-        if #available(iOS 11, tvOS 11, macOS 10.15, *) {
-            let data = try NSKeyedArchiver.archivedData(withRootObject: self.image, requiringSecureCoding: false)
-            try container.encode(data, forKey: .image)
-        }
-        else {
-            let data = NSKeyedArchiver.archivedData(withRootObject: self.image)
-            try container.encode(data, forKey: .image)
-        }
     }
 }
 
