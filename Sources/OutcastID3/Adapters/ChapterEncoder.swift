@@ -96,6 +96,14 @@ struct ChapterEncoder {
             subFrames.append(OutcastID3.Frame.StringFrame(type: .initialKey, encoding: .utf8, str: initialKey))
         }
 
+        if let genre = chapter.genre {
+            subFrames.append(OutcastID3.Frame.StringFrame(type: .contentType, encoding: .utf8, str: genre))
+        }
+
+        if let energyLevel = chapter.energyLevel {
+            subFrames.append(OutcastID3.Frame.UserDefinedTextFrame(type: .energyLevel(level: energyLevel), encoding: .utf8))
+        }
+
         for picture in chapter.pictures {
             let pictureFrame = OutcastID3.Frame.PictureFrame(
                 encoding: .isoLatin1,

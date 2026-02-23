@@ -429,7 +429,8 @@ extension OutcastID3.ID3Tag {
                 switch type {
                 case .raw(let desc, let text):
                     if desc == description {
-                        return text.isEmpty ? nil : text
+                        let trimmed = text.trimmingCharacters(in: .nullCharacters)
+                        return trimmed.isEmpty ? nil : trimmed
                     }
                 case .energyLevel:
                     continue

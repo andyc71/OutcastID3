@@ -22,7 +22,17 @@ final class ChapterDecoderTests: XCTestCase {
             endTime: 20.0,
             startByteOffset: nil,
             endByteOffset: nil,
-            subFrames: [titleFrame("Chapter 1"), artistFrame("Test Artist"), commentFrame("Interesting part"), ratingFrame(250)]
+            subFrames: [
+                titleFrame("Chapter 1"),
+                artistFrame("Test Artist"),
+                composerFrame("Test Composer"),
+                genreFrame("House / Dance"),
+                bpmFrame(128),
+                initialKeyFrame("8A"),
+                energyLevelFrame(7),
+                commentFrame("Interesting part"),
+                ratingFrame(250)
+            ]
         )
         
         let tocFrame = OutcastID3.Frame.TableOfContentsFrame(
@@ -41,8 +51,13 @@ final class ChapterDecoderTests: XCTestCase {
         let chapter = chapters[0]
         XCTAssertEqual(chapter.title, "Chapter 1")
         XCTAssertEqual(chapter.artist, "Test Artist")
+        XCTAssertEqual(chapter.composer, "Test Composer")
         XCTAssertEqual(chapter.comments, "Interesting part")
         XCTAssertEqual(chapter.rating, ID3Rating(email: "", rating: 250, playCount: 0))
+        XCTAssertEqual(chapter.genre, "House / Dance")
+        XCTAssertEqual(chapter.beatsPerMinute, 128)
+        XCTAssertEqual(chapter.initialKey, "8A")
+        XCTAssertEqual(chapter.energyLevel, 7)
         XCTAssertEqual(chapter.startTime, 10.0)
         XCTAssertEqual(chapter.endTime, 20.0)
     }
@@ -97,6 +112,8 @@ final class ChapterDecoderTests: XCTestCase {
         XCTAssertNil(chapter.explicitSetting)
         XCTAssertNil(chapter.beatsPerMinute)
         XCTAssertNil(chapter.initialKey)
+        XCTAssertNil(chapter.genre)
+        XCTAssertNil(chapter.energyLevel)
     }
     
     func testChapterDecoder_LoadChaptersFromFile() throws {
@@ -121,8 +138,10 @@ final class ChapterDecoderTests: XCTestCase {
         XCTAssertEqual(chapter.description, "Chapter Description")
         XCTAssertEqual(chapter.rating, ID3Rating(email: "test@example.com", rating: 200, playCount: 12))
         XCTAssertEqual(chapter.explicitSetting, "1")
-        XCTAssertEqual(chapter.beatsPerMinute, 121)
-        XCTAssertEqual(chapter.initialKey, "1A")
+        XCTAssertEqual(chapter.beatsPerMinute, 128)
+        XCTAssertEqual(chapter.initialKey, "8A")
+        XCTAssertEqual(chapter.genre, "House / Dance")
+        XCTAssertEqual(chapter.energyLevel, 6)
 
         let picture = try XCTUnwrap(chapter.pictures.first)
         XCTAssertEqual(picture.imageType, .coverFront)
@@ -248,5 +267,25 @@ final class ChapterDecoderTests: XCTestCase {
 
     func ratingFrame(_ rawRating: UInt8) -> OutcastID3TagFrame {
         return OutcastID3.Frame.PopularimeterFrame(email: "", rating: Int(rawRating), playCount: 0)
+    }
+
+    func composerFrame(_ composer: String) -> OutcastID3TagFrame {
+        return OutcastID3.Frame.StringFrame(type: .composer, encoding: .utf8, str: composer)
+    }
+
+    func genreFrame(_ genre: String) -> OutcastID3TagFrame {
+        return OutcastID3.Frame.StringFrame(type: .contentType, encoding: .utf8, str: genre)
+    }
+
+    func bpmFrame(_ bpm: Int) -> OutcastID3TagFrame {
+        return OutcastID3.Frame.StringFrame(type: .beatsPerMinute, encoding: .utf8, str: String(bpm))
+    }
+
+    func initialKeyFrame(_ initialKey: String) -> OutcastID3TagFrame {
+        return OutcastID3.Frame.StringFrame(type: .initialKey, encoding: .utf8, str: initialKey)
+    }
+
+    func energyLevelFrame(_ level: UInt8) -> OutcastID3TagFrame {
+        return OutcastID3.Frame.UserDefinedTextFrame(type: .energyLevel(level: level), encoding: .utf8)
     }
 }

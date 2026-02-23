@@ -17,6 +17,8 @@ public struct ID3Chapter: Equatable {
     public var explicitSetting: String?
     public var beatsPerMinute: Int?
     public var initialKey: String?
+    public var genre: String?
+    public var energyLevel: UInt8?
     public var pictures: [ID3Picture]
     public var startTime: TimeInterval
     public var endTime: TimeInterval
@@ -32,6 +34,8 @@ public struct ID3Chapter: Equatable {
         explicitSetting: String? = nil,
         beatsPerMinute: Int? = nil,
         initialKey: String? = nil,
+        genre: String? = nil,
+        energyLevel: UInt8? = nil,
         pictures: [ID3Picture] = [],
         startTime: TimeInterval,
         endTime: TimeInterval
@@ -46,6 +50,8 @@ public struct ID3Chapter: Equatable {
         self.explicitSetting = explicitSetting
         self.beatsPerMinute = beatsPerMinute
         self.initialKey = initialKey
+        self.genre = genre
+        self.energyLevel = energyLevel
         self.pictures = pictures
         self.startTime = startTime
         self.endTime = endTime
@@ -79,6 +85,8 @@ public struct ID3Chapter: Equatable {
         lhs.explicitSetting == rhs.explicitSetting &&
         lhs.beatsPerMinute == rhs.beatsPerMinute &&
         lhs.initialKey == rhs.initialKey &&
+        lhs.genre == rhs.genre &&
+        lhs.energyLevel == rhs.energyLevel &&
         lhs.startTime == rhs.startTime &&
         lhs.endTime == rhs.endTime &&
         pictureSignatureMatches(lhs.pictureSignature, rhs.pictureSignature)

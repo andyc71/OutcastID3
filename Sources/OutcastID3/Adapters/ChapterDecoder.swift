@@ -66,6 +66,8 @@ public struct ChapterDecoder {
             explicitSetting: extractUserDefinedText("ITUNESADVISORY", from: frame.subFrames),
             beatsPerMinute: extractBPM(from: frame.subFrames),
             initialKey: extractTextFrame(.initialKey, from: frame.subFrames),
+            genre: extractTextFrame(.contentType, from: frame.subFrames),
+            energyLevel: extractEnergyLevel(from: frame.subFrames),
             pictures: extractPictures(from: frame.subFrames),
             startTime: frame.startTime,
             endTime: frame.endTime,
@@ -111,11 +113,25 @@ public struct ChapterDecoder {
                 switch type {
                 case .raw(let desc, let text):
                     if desc == description {
-                        return text.isEmpty ? nil : text
+                        let trimmed = text.trimmingCharacters(in: .nullCharacters)
+                        return trimmed.isEmpty ? nil : trimmed
                     }
                 case .energyLevel:
                     continue
                 }
+            }
+        }
+        return nil
+    }
+
+    private static func extractEnergyLevel(from subFrames: [OutcastID3TagFrame]) -> UInt8? {
+        for frame in subFrames {
+            guard let userDefined = frame as? OutcastID3.Frame.UserDefinedTextFrame else {
+                continue
+            }
+            if case let .userDefinedText(type) = userDefined.frameType,
+               case let .energyLevel(level) = type {
+                return level
             }
         }
         return nil
