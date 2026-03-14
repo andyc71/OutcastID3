@@ -33,8 +33,11 @@ extension OutcastID3.Frame {
             }
             
             public static func parse(description: String, text: String) -> UserDefinedType {
-                if description == "EnergyLevel" {
-                    let trimmed = text.trimmingCharacters(in: .nullCharacters)
+                let normalizedDescription = description
+                    .trimmingCharacters(in: .whitespacesAndNewlines.union(.nullCharacters))
+
+                if normalizedDescription.caseInsensitiveCompare("EnergyLevel") == .orderedSame {
+                    let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines.union(.nullCharacters))
                     return .energyLevel(level: UInt8(trimmed))
                 }
                 else {

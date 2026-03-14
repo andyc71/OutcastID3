@@ -61,6 +61,46 @@ final class ChapterDecoderTests: XCTestCase {
         XCTAssertEqual(chapter.startTime, 10.0)
         XCTAssertEqual(chapter.endTime, 20.0)
     }
+
+    func testChapterDecoder_withUppercaseUTF16EnergyLevelFrame_returnsEnergyLevel() throws {
+        let rawEnergyFrame = OutcastID3.Frame.UserDefinedTextFrame(
+            description: "ENERGYLEVEL",
+            text: " 8 ",
+            encoding: .utf16
+        )
+        let rawEnergyFrameData = try rawEnergyFrame.frameData(version: .v2_4)
+        let parsedEnergyFrame = try XCTUnwrap(
+            OutcastID3.Frame.UserDefinedTextFrame.parse(
+                version: .v2_4,
+                data: rawEnergyFrameData,
+                useSynchSafeFrameSize: true
+            ) as? OutcastID3.Frame.UserDefinedTextFrame
+        )
+
+        let chapterFrame = OutcastID3.Frame.ChapterFrame(
+            elementId: "ch1",
+            startTime: 10.0,
+            endTime: 20.0,
+            startByteOffset: nil,
+            endByteOffset: nil,
+            subFrames: [parsedEnergyFrame]
+        )
+
+        let tocFrame = OutcastID3.Frame.TableOfContentsFrame(
+            elementId: "toc1",
+            isTopLevel: true,
+            isOrdered: true,
+            childElementIds: ["ch1"],
+            subFrames: []
+        )
+
+        let toc = try XCTUnwrap(
+            ChapterDecoder.decode(tocFrames: [tocFrame], chapterFrames: [chapterFrame])
+        )
+        let chapter = try XCTUnwrap(toc.chapters.first)
+
+        XCTAssertEqual(chapter.energyLevel, 8)
+    }
     
     func testChapterDecoder_missingChapterFrame_returnsEmpty() throws {
         let tocFrame = OutcastID3.Frame.TableOfContentsFrame(
