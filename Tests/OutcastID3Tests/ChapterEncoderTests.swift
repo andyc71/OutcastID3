@@ -15,15 +15,28 @@ import UIKit
 // Also tests saving chapters to an MP3 file.
 final class ChapterEncoderTests: XCTestCase {
 
-    func testEncoding_SingleTOCWithOneChapter() {
+    func testEncoding_SingleTOCWithOneChapter() throws {
+        let imageUrl = try testDataURL(for: "FrontCover.jpg")
+        let imageData = try Data(contentsOf: imageUrl)
+        let image = try XCTUnwrap(UIImage(data: imageData))
+        let picture = ID3Picture(image: image, imageType: .coverFront, description: "Front")
+        let rating = ID3Rating(email: "a@test.com", rating: 200, playCount: 20)
         let chapter = ID3Chapter(
             id: "ch1",
             title: "Intro",
             artist: "John Doe",
+            composer: "Jane Doe",
+            description: "Opening section",
             comments: "This is the intro",
-            rating: ID3Rating(email: "a@test.com", rating: 200, playCount: 20),
-            startTime: 0,
-            endTime: 10
+            rating: rating,
+            explicitSetting: "1",
+            beatsPerMinute: 121,
+            initialKey: "1A",
+            genre: "House / Dance",
+            energyLevel: 6,
+            pictures: [picture],
+            startTime: 0.5,
+            endTime: 10.75
         )
 
         let toc = ID3TableOfContents(
@@ -44,14 +57,42 @@ final class ChapterEncoderTests: XCTestCase {
         let frame = chapterFrames.first!
 
         XCTAssertEqual(frame.elementId, "ch1")
-        XCTAssertEqual(frame.startTime, 0)
-        XCTAssertEqual(frame.endTime, 10)
+        XCTAssertEqual(frame.startTime, 0.5)
+        XCTAssertEqual(frame.endTime, 10.75)
+        XCTAssertNil(frame.startByteOffset)
+        XCTAssertNil(frame.endByteOffset)
+        XCTAssertEqual(frame.subFrames.count, 12)
 
-        let subFrameTypes = frame.subFrames.map { $0.frameType }
-        XCTAssertTrue(subFrameTypes.contains(.string(.title)))
-        XCTAssertTrue(subFrameTypes.contains(.string(.leadArtist)))
-        XCTAssertTrue(subFrameTypes.contains(.comment))
-        XCTAssertTrue(subFrameTypes.contains(.popularimeter))
+        XCTAssertEqual(try XCTUnwrap(stringFrame(.title, in: frame.subFrames)).str, "Intro")
+        XCTAssertEqual(try XCTUnwrap(stringFrame(.leadArtist, in: frame.subFrames)).str, "John Doe")
+        XCTAssertEqual(try XCTUnwrap(stringFrame(.composer, in: frame.subFrames)).str, "Jane Doe")
+        XCTAssertEqual(try XCTUnwrap(stringFrame(.description, in: frame.subFrames)).str, "Opening section")
+        XCTAssertEqual(try XCTUnwrap(stringFrame(.beatsPerMinute, in: frame.subFrames)).str, "121")
+        XCTAssertEqual(try XCTUnwrap(stringFrame(.initialKey, in: frame.subFrames)).str, "1A")
+        XCTAssertEqual(try XCTUnwrap(stringFrame(.contentType, in: frame.subFrames)).str, "House / Dance")
+
+        let commentFrame = try XCTUnwrap(frame.subFrames.compactMap { $0 as? OutcastID3.Frame.CommentFrame }.first)
+        XCTAssertEqual(commentFrame.language, "EN")
+        XCTAssertEqual(commentFrame.commentDescription, "")
+        XCTAssertEqual(commentFrame.comment, "This is the intro")
+
+        let ratingFrame = try XCTUnwrap(frame.subFrames.compactMap { $0 as? OutcastID3.Frame.PopularimeterFrame }.first)
+        XCTAssertEqual(ratingFrame.email, rating.email)
+        XCTAssertEqual(ratingFrame.rating, rating.rating)
+        XCTAssertEqual(ratingFrame.playCount, rating.playCount)
+
+        let advisoryFrame = try XCTUnwrap(userDefinedTextFrame(description: "ITUNESADVISORY", in: frame.subFrames))
+        XCTAssertEqual(advisoryFrame.encoding, .utf8)
+        XCTAssertEqual(userDefinedTextFrameType(advisoryFrame), .raw(description: "ITUNESADVISORY", text: "1"))
+
+        let energyFrame = try XCTUnwrap(energyLevelFrame(in: frame.subFrames))
+        XCTAssertEqual(energyFrame.encoding, .utf8)
+        XCTAssertEqual(userDefinedTextFrameType(energyFrame), .energyLevel(level: 6))
+
+        let pictureFrame = try XCTUnwrap(frame.subFrames.compactMap { $0 as? OutcastID3.Frame.PictureFrame }.first)
+        XCTAssertEqual(pictureFrame.pictureType, .coverFront)
+        XCTAssertEqual(pictureFrame.pictureDescription, "Front")
+        assertImagesMatch(pictureFrame.picture.image, image)
     }
     
     func testEncoding_EmptyTOCProducesOnlyTOCFrame() {
@@ -153,9 +194,11 @@ final class ChapterEncoderTests: XCTestCase {
             explicitSetting: "1",
             beatsPerMinute: 121,
             initialKey: "1A",
+            genre: "House / Dance",
+            energyLevel: 6,
             pictures: [picture],
-            startTime: 0,
-            endTime: 10
+            startTime: 1.25,
+            endTime: 10.5
         )
 
         tag.setChapters([chapter])
@@ -165,6 +208,7 @@ final class ChapterEncoderTests: XCTestCase {
         let toc = try XCTUnwrap(tagNew.chapters)
         let savedChapter = try XCTUnwrap(toc.chapters.first)
 
+        XCTAssertEqual(savedChapter.id, "ch1")
         XCTAssertEqual(savedChapter.title, "Chapter Title")
         XCTAssertEqual(savedChapter.artist, "Chapter Artist")
         XCTAssertEqual(savedChapter.composer, "Chapter Composer")
@@ -173,10 +217,15 @@ final class ChapterEncoderTests: XCTestCase {
         XCTAssertEqual(savedChapter.explicitSetting, "1")
         XCTAssertEqual(savedChapter.beatsPerMinute, 121)
         XCTAssertEqual(savedChapter.initialKey, "1A")
+        XCTAssertEqual(savedChapter.genre, "House / Dance")
+        XCTAssertEqual(savedChapter.energyLevel, 6)
+        XCTAssertEqual(savedChapter.startTime, 1.25)
+        XCTAssertEqual(savedChapter.endTime, 10.5)
 
         let savedPicture = try XCTUnwrap(savedChapter.pictures.first)
         XCTAssertEqual(savedPicture.imageType, .coverFront)
         XCTAssertEqual(savedPicture.description, "Front")
+        assertImagesMatch(savedPicture.image, image)
     }
 
     func testEncoding_IncludesPictureFrames() throws {
@@ -210,5 +259,51 @@ final class ChapterEncoderTests: XCTestCase {
 
         XCTAssertEqual(pictureFrame?.pictureType, .coverFront)
         XCTAssertEqual(pictureFrame?.pictureDescription, "Front")
+    }
+
+    private func stringFrame(
+        _ type: OutcastID3.Frame.StringFrame.StringType,
+        in subFrames: [OutcastID3TagFrame]
+    ) -> OutcastID3.Frame.StringFrame? {
+        subFrames
+            .compactMap { $0 as? OutcastID3.Frame.StringFrame }
+            .first(where: { $0.type == type })
+    }
+
+    private func userDefinedTextFrame(
+        description: String,
+        in subFrames: [OutcastID3TagFrame]
+    ) -> OutcastID3.Frame.UserDefinedTextFrame? {
+        subFrames
+            .compactMap { $0 as? OutcastID3.Frame.UserDefinedTextFrame }
+            .first {
+                guard case let .raw(frameDescription, _) = userDefinedTextFrameType($0) else {
+                    return false
+                }
+                return frameDescription == description
+            }
+    }
+
+    private func energyLevelFrame(
+        in subFrames: [OutcastID3TagFrame]
+    ) -> OutcastID3.Frame.UserDefinedTextFrame? {
+        subFrames
+            .compactMap { $0 as? OutcastID3.Frame.UserDefinedTextFrame }
+            .first {
+                if case .energyLevel = userDefinedTextFrameType($0) {
+                    return true
+                }
+                return false
+            }
+    }
+
+    private func userDefinedTextFrameType(
+        _ frame: OutcastID3.Frame.UserDefinedTextFrame
+    ) -> OutcastID3.Frame.UserDefinedTextFrame.UserDefinedType {
+        guard case let .userDefinedText(type) = frame.frameType else {
+            XCTFail("Expected user-defined text frame")
+            return .raw(description: "", text: "")
+        }
+        return type
     }
 }
